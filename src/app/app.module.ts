@@ -2,13 +2,34 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 
 import { AppComponent } from './app.component';
+import { HomeComponent } from './home/home.component';
+import { AppRoutingModule } from './/app-routing.module';
+import { NoteComponent } from './note/note.component';
+import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
+import { NoteService } from './note.service';
+import { RouterModule, Routes } from '@angular/router';
+import { HttpClientModule } from '@angular/common/http';
+
+
+const routes: Routes = [
+  { path: '', component: HomeComponent },
+  { path: ':slug', component: NoteComponent },
+  { path: '**', component: PageNotFoundComponent },
+];
+
+
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    HomeComponent,
+    NoteComponent,
+    PageNotFoundComponent
   ],
   imports: [
-    BrowserModule
+    BrowserModule,
+    RouterModule.forRoot(routes),
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]

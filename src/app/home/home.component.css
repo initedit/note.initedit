@@ -1,0 +1,58 @@
+.home{
+        min-width: 100vh;
+        min-height: 100vh;
+        position: relative;
+        z-index: 1;
+}
+.svg-bg{
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+}
+.bg-container,.content-container{
+        position: absolute;
+        left: 0;
+        top:0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        background-color: transparent;
+}
+.bg-container{
+        background-color: #111;
+        opacity: 0.9;        
+}
+.content-container{
+        z-index: 3;
+        background-color: rgba(10,10,10,0.9);
+}
+.brand{
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 40%;
+        width: 100%;
+        text-align: center;
+        color: #EEE;
+        font-size: 16em;
+}
+.input-note{
+        position: absolute;
+        top: 60%;
+        width: 65%;
+        padding: 0.8em 0.6em;
+        left: 17.5%;
+        background-color: #333;
+        color: #EEE;
+        outline: none;
+        text-align: center;
+        border-width: 0.05em;
+        border-style:solid;
+        border-color: #111;
+}
+.input-note:hover,.input-note:focus{
+        border-color: rgb(255, 255, 255);
+}
