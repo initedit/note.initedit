@@ -1,6 +1,24 @@
-<app-header-nav></app-header-nav>
-<app-note-collection [notes]="response" [slug]="getCurrentNoteSlug()" (onAction)="noteCollectionEvent($event)" ></app-note-collection>
+<div class="main-container" [class.menu-left-visible]="menuLeftVisible">
+<app-header-nav (onAction)="menuEvent($event)"></app-header-nav>
+<app-note-collection [notes]="response" [activeNote]="selectedNote" [slug]="getCurrentNoteSlug()" (onAction)="noteCollectionEvent($event)" ></app-note-collection>
+<div class="menu-left">
+  <ul class="list-group">
+      <li class="list-group-item list-group-item-action active">
+          {{getCurrentNoteSlug()}}
+      </li>
+  </ul>
+    <ul class="list-group" [sortablejs]="noteCollection" [sortablejsOptions]="sortableOption">
 
+    <li class="list-group-item list-group-item-action" *ngFor="let note of noteCollection" (click)="selectedNote=note">
+      {{note.title}}
+
+      <span class="badge badge-pill float-right" click-stop-propagation (click)="deleteTab(note)">
+        <i class="fa fa-trash-o"></i>
+      </span>
+    </li>
+    
+  </ul>
+</div>
 <div class="bs-modal" [class.visible]="showAuthModel">
                 <div class="modal-dialog">
                   <div class="modal-content">
@@ -36,4 +54,5 @@
         </div>
       </div>
     </div>
+</div>
 </div>

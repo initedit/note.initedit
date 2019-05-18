@@ -1,0 +1,10 @@
+.menu-left{
+        display: none;
+}
+.main-container.menu-left-visible{
+        position: relative;
+        left: 240px;
+}
+.menu-left-visible .menu-left{
+        display: block;
+}

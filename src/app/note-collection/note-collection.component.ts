@@ -13,8 +13,15 @@ export class NoteCollectionComponent implements OnInit {
   
   noteCollection:NoteTabUiModel[];
   
-  @Input()
+  
   selectedNote:NoteTabUiModel;
+  @Input()
+  set activeNote(value:NoteTabUiModel){
+    this.selectedNote=value;
+    if(this.selectedNote){
+      this.fetchNoteTabContent();
+    }
+  }
 
   noteInfo:NoteResponseInfoModel;
 
@@ -36,6 +43,15 @@ export class NoteCollectionComponent implements OnInit {
     if(this._noteDetails){
       this.noteCollection=this._noteDetails.content;
       this.noteInfo = this._noteDetails.info;
+      if(this.noteCollection.length==0){
+        this.addNewNoteTab();
+      }
+      if(this.noteCollection.length>0){
+        this.selectedNote=this.noteCollection[0];
+      }
+      if(this.selectedNote){
+        this.fetchNoteTabContent();
+      }
     }
   }
 
@@ -54,26 +70,29 @@ export class NoteCollectionComponent implements OnInit {
     this.selectedNote = new NoteTabUiModel();
   }
   ngOnChanges(){
-    console.log("ngOnChanges",this.selectedNote,this.noteCollection);
-    if(!this.isLoaded && this.noteCollection){
-      this.selectedNote = this.noteCollection[0];
-      this.isLoaded=false;
-    }
-    if(this.selectedNote){
-      this.fetchNoteTabContent();
-    }
+    // console.log("ngOnChanges",this.selectedNote,this.noteCollection);
+    // if(!this.isLoaded && this.noteCollection){
+    //   this.selectedNote = this.noteCollection[0];
+    //   this.isLoaded=false;
+    // }
+    // if(this.selectedNote){
+    //   this.fetchNoteTabContent();
+    // }
   }
 
   fetchNoteTabContent(){
-    this.noteService.fetchNoteTab(this.selectedNote.slug,this.selectedNote.id)
-    .subscribe(
-      response=>{
-        console.log(response);
-        if(response.code==1){
-          this.selectedNote.content = response.content[0].content;
+    //Fetch only if tab created otherwise it has no meaning to hit web server
+    if(this.selectedNote.id){
+      this.noteService.fetchNoteTab(this.selectedNote.slug,this.selectedNote.id)
+      .subscribe(
+        response=>{
+          console.log(response);
+          if(response.code==1){
+            this.selectedNote.content = response.content[0].content;
+          }
         }
-      }
-    );
+      );
+    }
   }
 
   onChangeSelectedNote(note:NoteTabUiModel){
@@ -91,11 +110,12 @@ export class NoteCollectionComponent implements OnInit {
     tab.content = "";
     tab.slug = this.slug;
     tab.visibility=1;
-    tab.order_index = this.noteCollection.reduce((oldVal,newVal)=>oldVal.order_index>newVal.order_index?oldVal:newVal).order_index + 1;
+    let dummy = new NoteTabUiModel();
+    dummy.order_index=0;
+    tab.order_index = this.noteCollection.reduce((oldVal:NoteTabUiModel,newVal:NoteTabUiModel)=>oldVal.order_index>newVal.order_index?oldVal:newVal,dummy).order_index + 1;
 
     this.noteCollection.unshift(tab);
     this.onChangeSelectedNote(tab);
-    
     this.inputContentEl.nativeElement.focus();
   }
   hideNoteTab(note:NoteTabUiModel){
@@ -140,14 +160,16 @@ export class NoteCollectionComponent implements OnInit {
     }
   }
   saveNotes(){
-
-    if(!this.isNoteAuthorized()){
-      if(this._noteDetails.info.type=="Public"){
-        this.lockCurrentNote();
-      }else{
-        this.unlockCurrentNote();
+    
+    if(this.isNoteLocked()){
+      if(!this.isNoteAuthorized()){
+        //if(this._noteDetails.info.type=="Public"){
+         // this.lockCurrentNote();
+        //}else{
+          this.unlockCurrentNote();
+        //}
+        return;
       }
-      return;
     }
 
 
@@ -227,6 +249,13 @@ export class NoteCollectionComponent implements OnInit {
 
   isNoteAuthorized(){
     return  (this.noteService.getPassword(this.slug)?true:false);
+  }
+
+  isNoteLocked(){
+    if(this.noteInfo){
+      return this.noteInfo.type=="Public"?false:true;
+    }
+    return false;
   }
   
 }

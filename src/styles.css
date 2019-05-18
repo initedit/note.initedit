@@ -113,3 +113,17 @@ body{
 .bs-modal.visible{
         display: block  ;
 }
+
+/* Manu Left */
+.menu-left{
+    position: fixed;
+    top: 0;
+    left: 0;
+    min-width: 240px;
+    height: 100vh;
+    overflow-y: auto;
+    background-color: #FFF;
+}
+.menu-left .note-name{
+        padding: 1em 0.5em;
+}

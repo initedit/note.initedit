@@ -38,14 +38,14 @@
         </span>
     </div>
 
-    <div class="menu-item" id="lockNoteBtn" *ngIf="!isNoteAuthorized()" (click)="unlockCurrentNote()">
+    <div class="menu-item" id="lockNoteBtn" *ngIf="isNoteLocked() && !isNoteAuthorized()" (click)="unlockCurrentNote()">
         <i class="fa fa-lock icon"></i>
         <span class="title">
             <span class="hint">Unlock(ALT+U)</span>
         </span>
     </div>
 
-    <div class="menu-item" id="unlockAltNoteBtn" *ngIf="isNoteAuthorized()" (click)="removePassword()">
+    <div class="menu-item" id="unlockAltNoteBtn" *ngIf="isNoteLocked() && isNoteAuthorized()" (click)="removePassword()">
         <i class="fa fa-unlock-alt icon"></i>
         <span class="title">
             <span class="hint">Lock(ALT+U)</span>

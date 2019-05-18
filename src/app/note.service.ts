@@ -35,16 +35,24 @@ export class NoteService {
     return this.http.post<NoteResponseModel>(this.getAPIUrl("note/"+slug+"/auth"),{},httpOptions)
   }
   fetchNote(slug:string):Observable<NoteResponseModel>{
+    let token = this.getApiToken(slug);
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json'})
     };
+    if(token){
+      httpOptions.headers = httpOptions.headers.append("token",token);
+    }
     return this.http.get<NoteResponseModel>(this.getAPIUrl("note/"+slug),httpOptions)
   }
 
   fetchNoteTab(slug:string,tabid:any):Observable<NoteResponseModel>{
+    let token = this.getApiToken(slug);
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json'})
     };
+    if(token){
+      httpOptions.headers = httpOptions.headers.append("token",token);
+    }
     return this.http.get<NoteResponseModel>(this.getAPIUrl("note/"+slug+"/tab/"+tabid),httpOptions)
   }
 
@@ -58,16 +66,22 @@ export class NoteService {
   createNewNoteTab(slug:string,request:NoteTabCreateRequestModel):any{
     let token = this.getApiToken(slug);
     const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
+      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json'})
     };
+    if(token){
+      httpOptions.headers = httpOptions.headers.append("token",token);
+    }
     return this.http.post(this.getAPIUrl("note/"+slug+"/tab"),request,httpOptions)
   }
 
   createNewNoteTabs(slug:string,request:NoteTabCreateRequestModel[]):any{
     let token = this.getApiToken(slug);
     const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
+      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json'})
     };
+    if(token){
+      httpOptions.headers = httpOptions.headers.append("token",token);
+    }
     return this.http.post(this.getAPIUrl("note/"+slug+"/tabs"),request,httpOptions)
   }
 
@@ -82,40 +96,57 @@ export class NoteService {
   updateNoteTab(slug:string,request:NoteTabCreateRequestModel):any{
     let token = this.getApiToken(slug);
     const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
+      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json'})
     };
+    if(token){
+      httpOptions.headers = httpOptions.headers.append("token",token);
+    }
+    console.log("Now Woeking","httpOptions.headers.append")
     return this.http.patch(this.getAPIUrl("note/"+slug+"/tab/"+request.id),request,httpOptions)
   }
 
   updateNoteTabs(slug:string,request:NoteTabCreateRequestModel[]):any{
     let token = this.getApiToken(slug);
     const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
+      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json'})
     };
+    if(token){
+      httpOptions.headers = httpOptions.headers.append("token",token);
+    }
     return this.http.patch(this.getAPIUrl("note/"+slug+"/tab"),request,httpOptions)
   }
 
   deleteNoteTab(slug:string,tabid:any):any{
     let token = this.getApiToken(slug);
     const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
+      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json'})
     };
+    if(token && token.length>0){
+      httpOptions.headers = httpOptions.headers.append("token",token);
+    }
+    console.log("token",httpOptions,token,slug,tabid);
     return this.http.delete(this.getAPIUrl("note/"+slug+"/tab/"+tabid),httpOptions)
   }
 
   deleteNoteTabs(slug:string,tabid:any):any{
     let token = this.getApiToken(slug);
     const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
+      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json'})
     };
+    if(token){
+      httpOptions.headers = httpOptions.headers.append("token",token);
+    }
     return this.http.delete(this.getAPIUrl("note/"+slug+"/tab/"+tabid),httpOptions)
   }
 
   deleteNote(slug:string):any{
     let token = this.getApiToken(slug);
     const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
+      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json'})
     };
+    if(token){
+      httpOptions.headers = httpOptions.headers.append("token",token);
+    }
     return this.http.delete(this.getAPIUrl("note/"+slug),httpOptions)
   }
 

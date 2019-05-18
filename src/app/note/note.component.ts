@@ -6,16 +6,20 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NoteResponseModel } from '../model/note-response-model';
 import Utils from '../Util';
 import { ToastService } from '../toast.service';
+import { NoteTabUiModel } from '../model/note-tab-ui-model';
+import { NoteTabCreateRequestModel } from '../model/note-tab-create-request-model';
 
 @Component({
   selector: 'app-note',
   templateUrl: './note.component.html',
-  styleUrls: []
+  styleUrls: ['./note.component.css']
 })
 export class NoteComponent implements OnInit {
   response:NoteResponseModel;
-  noteCollection:any;
+  noteCollection:NoteTabUiModel[];
   showAuthModel:boolean=false;
+  menuLeftVisible:boolean=false;
+  selectedNote:NoteTabUiModel
   constructor(private noteService:NoteService,private router:Router,private toastService:ToastService) { }
 
   ngOnInit() {
@@ -42,6 +46,7 @@ export class NoteComponent implements OnInit {
         this.noteService.createNewNote(request)
         .subscribe(sucess=>{
           console.log(sucess);
+          this.refreshNoteData();
         },
         (error:HttpErrorResponse)=>{
           console.log("Unable to create new note",error)
@@ -71,7 +76,6 @@ export class NoteComponent implements OnInit {
           this.noteService.addPassword(slug,encPassword);
           this.showAuthModel=false;
           this.toastService.showToast("Unlocked");
-
         }else{
           this.toastService.showToast("Invalid Password")
         }
@@ -108,4 +112,41 @@ export class NoteComponent implements OnInit {
     });
   }
 
+  menuEvent($event){
+    if($event=="OPEN_MENU_LEFT"){
+      this.menuLeftVisible=true;
+    }else if($event=="CLOSE_MENU_LEFT"){
+      this.menuLeftVisible=false;
+    }else if($event=="TOGGLE_MENU_LEFT"){
+      this.menuLeftVisible=!this.menuLeftVisible;
+    }
+  }
+  deleteTab(tab:NoteTabUiModel){
+    if(tab.id){
+      this.noteService.deleteNoteTab(tab.slug,tab.id)
+      .subscribe((response:NoteResponseModel)=>{
+        if(response.code==1){
+          this.removeNoteTabFromCollection(tab);
+        }else{
+          this.toastService.showToast("Unable to delete tab");
+        }
+      });
+    }else{
+      this.removeNoteTabFromCollection(tab);
+    }
+  }
+  removeNoteTabFromCollection(tab:NoteTabUiModel){
+    let index = this.noteCollection.indexOf(tab);
+    this.noteCollection.splice(index,1);
+  }
+
+  sortableOption={
+    onUpdate: (event: any) => {
+      this.noteCollection.forEach((note:NoteTabUiModel,index:number)=>{
+        note.order_index=(index+1);
+        note.modifiedOrder=true;
+      })
+      console.log(this.noteCollection,"Sorted");
+    }
+  }
 }
