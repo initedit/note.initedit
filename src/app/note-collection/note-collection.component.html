@@ -1,0 +1,95 @@
+<div class="tab-contaniner scroll-bar">
+  <button class="btn-add-tab" (click)="addNewNoteTab()">
+      <i class="fa fa-plus"></i> New Tab
+    </button>
+  <div class="tab" *ngFor="let note of noteCollection"
+  [class.active]="note.id==selectedNote.id && note.order_index==selectedNote.order_index"
+  [class.d-none]="note.visibility==0"
+  (click)="onChangeSelectedNote(note)"
+  (dblclick)="onDoubleClickTab(note,$event)"
+  >
+    <span class="unsaved-indicator" [class.d-block]="note.modifiedContent || note.modifiedTitle">*</span>
+    <input type="text" (input)="modifiedTab('title',selectedNote)" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [disabled]="!note.isTitleEnabled">
+    <i class="fa fa-close" (click)="hideNoteTab(note)"></i>
+  </div>
+  
+</div>
+<div class="note-content">
+  <textarea class="writeable-content" (input)="modifiedTab('content',selectedNote)" #inputContent [(ngModel)]="selectedNote.content"></textarea>
+</div>
+
+<section class="sidebar-left marker-visible">
+    <div class="menu-item" id="bookNoteBtn" >
+        <i class="fa fa-book icon"></i> 
+        <span class="title">
+            <span class="hint">View Book Index(ALT+B)</span>
+        </span>
+    </div>
+    <div class="menu-item" id="newNoteBtn" >
+        <i class="fa fa-plus icon"></i> 
+        <span class="title">
+            <span class="hint">New Note(ALT+N)</span>
+        </span>
+    </div>
+    <div class="menu-item" id="saveNoteBtn" (click)="saveNotes()">
+        <i class="fa fa-save icon"></i>
+        <span class="title">
+            <span class="hint">Save(CTRL+S)</span>
+        </span>
+    </div>
+
+    <div class="menu-item" id="lockNoteBtn" *ngIf="!isNoteAuthorized()" (click)="unlockCurrentNote()">
+        <i class="fa fa-lock icon"></i>
+        <span class="title">
+            <span class="hint">Unlock(ALT+U)</span>
+        </span>
+    </div>
+
+    <div class="menu-item" id="unlockAltNoteBtn" *ngIf="isNoteAuthorized()" (click)="removePassword()">
+        <i class="fa fa-unlock-alt icon"></i>
+        <span class="title">
+            <span class="hint">Lock(ALT+U)</span>
+        </span>
+    </div>
+
+    <div class="menu-item" id="withoutLockNoteBtn" *ngIf="noteInfo?.type=='Public'" (click)="lockCurrentNote()">
+        <i class="fa fa-unlock icon"></i>
+        <span class="title">
+            <span class="hint">Lock(ALT+U)</span>
+        </span>
+    </div>
+
+    <div class="menu-item" id="linkNoteBtn" >
+        <i class="fa fa-link icon"></i>
+        <span class="title">
+            <span class="hint">Copy URL(ALT+L)</span>
+        </span>
+    </div>
+    <div class="menu-item" id="clipboardNoteBtn" >
+        <i class="fa fa-clipboard icon"></i>
+        <span class="title">
+            <span class="hint">Copy(ALT+C)</span>
+        </span>
+    </div>
+<!-- 
+    <div class="menu-item" id="printNoteBtn" >
+        <i class="fa fa-print icon"></i>
+        <span class="title">
+            <span class="hint">Print</span>
+        </span>
+    </div> -->
+
+    <div class="menu-item" id="deleteNoteBtn" style="display: none;">
+        <i class="fa fa-trash icon"></i>
+        <span class="title">
+            <span class="hint">Delete(ALT+DEL)</span>
+        </span>
+    </div>
+<!-- 
+    <div class="menu-item" id="downloadNoteBtn" >
+        <i class="fa fa-download icon"></i>
+        <span class="title">
+            <span class="hint">Download(ALT+D)</span>
+        </span>
+    </div> -->
+</section>

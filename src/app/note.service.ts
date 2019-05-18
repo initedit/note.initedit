@@ -4,78 +4,115 @@ import { HttpClientModule }    from '@angular/common/http';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { NoteCreateRequestModel } from './model/note-create-request-model';
 import { NoteTabCreateRequestModel } from './model/note-tab-create-request-model';
+import { NoteResponseModel } from './model/note-response-model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NoteService {
   private baseUrl = '//note.home/public/api/';
+  
   constructor( private http: HttpClient) { }
 
-  fetchNote(slug:string):any{
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json'})
-    };
-    return this.http.get(this.getAPIUrl("note/"+slug),httpOptions)
+  addPassword(slug:string,password:string,shouldEncrypt:boolean=false):boolean{
+    //TODO : Encrypt password if required
+    localStorage.setItem(slug,password);
+    return true;
+  }
+  removePassword(slug:string):boolean{
+    localStorage.removeItem(slug);
+    return true;
+  }
+  getPassword(slug:string):string{
+    return localStorage.getItem(slug);
   }
 
-  fetchNoteTab(slug:string,tabid:any):any{
+
+  authenticate(slug:string,password:string):Observable<NoteResponseModel>{
+    const httpOptions = {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':password})
+    };
+    return this.http.post<NoteResponseModel>(this.getAPIUrl("note/"+slug+"/auth"),{},httpOptions)
+  }
+  fetchNote(slug:string):Observable<NoteResponseModel>{
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json'})
     };
-    return this.http.get(this.getAPIUrl("note/"+slug+"/tab/"+tabid),httpOptions)
+    return this.http.get<NoteResponseModel>(this.getAPIUrl("note/"+slug),httpOptions)
+  }
+
+  fetchNoteTab(slug:string,tabid:any):Observable<NoteResponseModel>{
+    const httpOptions = {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json'})
+    };
+    return this.http.get<NoteResponseModel>(this.getAPIUrl("note/"+slug+"/tab/"+tabid),httpOptions)
   }
 
   createNewNote(request:NoteCreateRequestModel):any{
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json'})
     };
-    return this.http.post(this.getAPIUrl("note/add"),request,httpOptions)
+    return this.http.post(this.getAPIUrl("note"),request,httpOptions)
   }
 
-  createNewNoteTab(slug:string,token:string,request:NoteTabCreateRequestModel):any{
+  createNewNoteTab(slug:string,request:NoteTabCreateRequestModel):any{
+    let token = this.getApiToken(slug);
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
     };
     return this.http.post(this.getAPIUrl("note/"+slug+"/tab"),request,httpOptions)
   }
 
-  createNewNoteTabs(slug:string,token:string,request:NoteTabCreateRequestModel[]):any{
+  createNewNoteTabs(slug:string,request:NoteTabCreateRequestModel[]):any{
+    let token = this.getApiToken(slug);
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
     };
     return this.http.post(this.getAPIUrl("note/"+slug+"/tabs"),request,httpOptions)
   }
 
-  updateNewNoteTab(slug:string,token:string,request:NoteTabCreateRequestModel):any{
+  updateNote(slug:string,request:NoteCreateRequestModel):any{
+    let token = request.password;
+    const httpOptions = {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
+    };
+    return this.http.patch(this.getAPIUrl("note/"+slug),request,httpOptions)
+  }
+
+  updateNoteTab(slug:string,request:NoteTabCreateRequestModel):any{
+    let token = this.getApiToken(slug);
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
     };
     return this.http.patch(this.getAPIUrl("note/"+slug+"/tab/"+request.id),request,httpOptions)
   }
 
-  updateNewNoteTabs(slug:string,token:string,request:NoteTabCreateRequestModel[]):any{
+  updateNoteTabs(slug:string,request:NoteTabCreateRequestModel[]):any{
+    let token = this.getApiToken(slug);
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
     };
     return this.http.patch(this.getAPIUrl("note/"+slug+"/tab"),request,httpOptions)
   }
-  
-  deleteNoteTab(slug:string,token:string,tabid:any):any{
+
+  deleteNoteTab(slug:string,tabid:any):any{
+    let token = this.getApiToken(slug);
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
     };
     return this.http.delete(this.getAPIUrl("note/"+slug+"/tab/"+tabid),httpOptions)
   }
 
-  deleteNoteTabs(slug:string,token:string,tabid:any):any{
+  deleteNoteTabs(slug:string,tabid:any):any{
+    let token = this.getApiToken(slug);
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
     };
     return this.http.delete(this.getAPIUrl("note/"+slug+"/tab/"+tabid),httpOptions)
   }
 
-  deleteNote(slug:string,token:string):any{
+  deleteNote(slug:string):any{
+    let token = this.getApiToken(slug);
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json','token':token})
     };
@@ -85,5 +122,8 @@ export class NoteService {
 
   getAPIUrl(path:string){
     return this.baseUrl + path;
+  }
+  getApiToken(slug:string){
+    return this.getPassword(slug);
   }
 }

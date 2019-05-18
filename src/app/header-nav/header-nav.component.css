@@ -1,0 +1,8 @@
+.nav-container{
+        padding-top:0.3em;
+        padding-bottom: 0.3em;
+        background-color: #111111;
+        color: #eeeeee;
+        font-size: 1.4em;
+        box-shadow: 0px 2px 3px #DDD; 
+}

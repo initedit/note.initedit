@@ -1,3 +1,39 @@
-<p>
-  note works!
-</p>
+<app-header-nav></app-header-nav>
+<app-note-collection [notes]="response" [slug]="getCurrentNoteSlug()" (onAction)="noteCollectionEvent($event)" ></app-note-collection>
+
+<div class="bs-modal" [class.visible]="showAuthModel">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                   <div class="modal-header">
+                      <h5 class="modal-title ">Unlock</h5>
+                      <button type="button" class="close" (click)="showAuthModel=false">
+                          <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <input type="text" #myPassword class="form-control mb-2" placeholder="type your sceret key"/>
+                      <button type="button" class="btn btn-primary w-100" (click)="validatePassword(myPassword.value)">Unlock</button>
+                    </div>
+                  </div>
+                </div>
+</div>
+
+<div class="bs-modal" [class.visible]="showCreatePassword">
+    <div class="modal-dialog">
+      <div class="modal-content">
+       <div class="modal-header">
+          <h5 class="modal-title ">Set Password</h5>
+          <button type="button" class="close" (click)="showCreatePassword=false">
+              <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="text" #myNewPassword class="form-control mb-2" placeholder="type your sceret key"/>
+          <label>
+            <input type="checkbox" #isPrivate /> Make note private(Super Secure)
+          </label>
+          <button type="button" class="btn btn-primary w-100" (click)="setNotePassword(myNewPassword.value,isPrivate.checked)">Set Password</button>
+        </div>
+      </div>
+    </div>
+</div>
