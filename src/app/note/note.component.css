@@ -1,10 +1,21 @@
 .menu-left{
-        display: none;
+        left: -240px;
+}
+.main-container,.menu-left{
+        transition: left 0.2s linear;
+}
+.main-container{
+        position: relative;
+        left: 0;
 }
 .main-container.menu-left-visible{
-        position: relative;
         left: 240px;
 }
 .menu-left-visible .menu-left{
-        display: block;
+       left: 0;
+}
+.back-nav{
+        padding: 0.6em 1.255em;
+        color: white;
+        cursor: pointer;
 }

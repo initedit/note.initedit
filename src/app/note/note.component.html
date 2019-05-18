@@ -1,12 +1,17 @@
 <div class="main-container" [class.menu-left-visible]="menuLeftVisible">
 <app-header-nav (onAction)="menuEvent($event)"></app-header-nav>
 <app-note-collection [notes]="response" [activeNote]="selectedNote" [slug]="getCurrentNoteSlug()" (onAction)="noteCollectionEvent($event)" ></app-note-collection>
+<app-toast></app-toast>
 <div class="menu-left">
-  <ul class="list-group">
-      <li class="list-group-item list-group-item-action active">
-          {{getCurrentNoteSlug()}}
+  <!-- <ul class="list-group">
+      <li class="list-group-item list-group-item-action active" >
+         
       </li>
-  </ul>
+  </ul> -->
+  <div class="bg-primary back-nav" (click)="menuLeftVisible=false"> 
+    <i class="fa fa-arrow-left pr-2" aria-hidden="true"></i>
+    Close
+  </div>
     <ul class="list-group" [sortablejs]="noteCollection" [sortablejsOptions]="sortableOption">
 
     <li class="list-group-item list-group-item-action" *ngFor="let note of noteCollection" (click)="selectedNote=note">

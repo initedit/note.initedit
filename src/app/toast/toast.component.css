@@ -1,0 +1,17 @@
+.toast-container{
+        height: auto;
+    position: fixed;
+    top: 2em;
+    width: 240px;
+    right: 0;
+    z-index: 4;
+}
+
+.toast-message{
+        background-color: #FFF;
+        color: #111;
+        padding: 0.7em;
+        margin-bottom: 0.2em;
+        margin-right: 0.2em;
+        transition: height 0.3s linear;    
+}

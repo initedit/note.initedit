@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NoteService } from '../note.service';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { NoteCreateRequestModel } from '../model/note-create-request-model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NoteResponseModel } from '../model/note-response-model';
@@ -19,8 +19,20 @@ export class NoteComponent implements OnInit {
   noteCollection:NoteTabUiModel[];
   showAuthModel:boolean=false;
   menuLeftVisible:boolean=false;
-  selectedNote:NoteTabUiModel
-  constructor(private noteService:NoteService,private router:Router,private toastService:ToastService) { }
+  selectedNote:NoteTabUiModel;
+  selectedNotesTabIndex:number=0;
+  constructor(private noteService:NoteService,private router:Router,private toastService:ToastService,private route: ActivatedRoute) { 
+    const fragment: string = route.snapshot.fragment;
+    try{
+      let i = parseInt(fragment);
+      if(i>0){
+        this.selectedNotesTabIndex= i;
+      }
+    }catch(ex){
+
+    }
+    
+  }
 
   ngOnInit() {
     // console.log(this.router.url);
@@ -33,6 +45,24 @@ export class NoteComponent implements OnInit {
     .subscribe((response:NoteResponseModel) => {
       this.response = response;
       this.noteCollection = response.content;
+      if(this.selectedNotesTabIndex>=0 && this.noteCollection.length>this.selectedNotesTabIndex){
+        //this.selectedNote=this.noteCollection[this.selectedNotesTabIndex];
+        let visibleCount = 0;
+        this.noteCollection.forEach((tab:NoteTabUiModel)=>{
+          if(tab.visibility==1){
+            visibleCount++;
+          }
+          if(visibleCount==this.selectedNotesTabIndex){
+            this.selectedNote=tab;
+          }
+        })
+        if(!this.selectedNote && this.noteCollection.length>0){
+          this.selectedNote = this.noteCollection[0];
+        }
+        console.log(this.selectedNote,this.selectedNotesTabIndex,"SelectedNote")
+        this.selectedNotesTabIndex=-1;
+
+      }
       console.log(response,"From note component");
     },
     (error:HttpErrorResponse)=>{
@@ -66,16 +96,15 @@ export class NoteComponent implements OnInit {
   validatePassword(password:string){
     let slug = this.getCurrentNoteSlug();
     let encPassword = Utils.noteEncrypt(slug,'/'+slug,password);
-    console.log(password,slug,encPassword,"validatePassword");
-    
     this.noteService.authenticate(slug,encPassword)
     .subscribe((response:NoteResponseModel)=>{
         console.log(response,"Authenticate");
         if(response.code==1){
           //valid password
-          this.noteService.addPassword(slug,encPassword);
+          this.noteService.addPassword(slug,encPassword,password);
           this.showAuthModel=false;
           this.toastService.showToast("Unlocked");
+          this.refreshNoteData();
         }else{
           this.toastService.showToast("Invalid Password")
         }
@@ -90,29 +119,76 @@ export class NoteComponent implements OnInit {
     }else if($event=="LOGOUT"){
       this.noteService.removePassword(this.getCurrentNoteSlug());
       if(this.response.info.type=="Private"){
+        this.noteCollection=[];
+        this.response=null;
         this.refreshNoteData();
       }
+      this.toastService.showToast("Locked");
+    }else if($event=="TOGGLE_MENU_LEFT"){
+      this.menuLeftVisible=true;
     }
   }
   setNotePassword(password:string,isPrivate:boolean){
     let slug = this.getCurrentNoteSlug();
     let encPassword = Utils.noteEncrypt(slug,'/'+slug,password);
-    console.log(password,slug,encPassword,"setNotePassword");
     let request = new NoteCreateRequestModel();    
     request.name = slug;
     request.password=encPassword;
     request.type=isPrivate?"Private":"Protected";
-    this.noteService.updateNote(slug,request)
-    .subscribe((response:NoteResponseModel)=>{
-      if(response.code==1){
-        this.noteService.addPassword(slug,encPassword);
+
+    //if request is private then fetch all tabs content first
+    if(request.type=="Private"){
+      let ids = new Array<string>();
+      this.response.content.forEach((item:NoteTabUiModel)=>{
+          if (item.id && !item.content){
+            ids.push(item.id);
+          }
+      });
+      if(ids.length>0){
+        this.noteService.fetchNoteTabs(slug,ids)
+        .subscribe((response:NoteResponseModel)=>{
+          if(response.code==1){
+            let collection = response.content;
+            this.response.content.forEach((item:NoteTabUiModel)=>{
+              if (ids.indexOf(item.id)>=0){
+                let encContent = collection.filter((tab:NoteTabUiModel)=>{
+                  return tab.id==item.id
+                })[0].content;
+                item.content = encContent;
+                
+              }
+            });
+            this.makeNotePrivateAndSave(slug, request, encPassword, password);      
+          }
+        });
       }else{
-        this.toastService.showToast("Unable to create note");
+          this.makeNotePrivateAndSave(slug, request, encPassword, password);
       }
-    });
+
+    }else{
+      this.makeNotePrivateAndSave(slug, request, encPassword, password);
+    }
   }
 
-  menuEvent($event){
+  private makeNotePrivateAndSave(slug: string, request: NoteCreateRequestModel, encPassword: any, password: string) {
+    this.noteService.updateNote(slug, request)
+      .subscribe((response: NoteResponseModel) => {
+        if (response.code == 1) {
+          this.noteService.addPassword(slug, encPassword, password);
+          this.showCreatePassword = false;
+          this.response.info.type = request.type;
+          this.noteCollection.forEach((tab:NoteTabUiModel)=>{
+            tab.modifiedContent=true;
+            tab.modifiedTitle=true;
+          });
+        }
+        else {
+          this.toastService.showToast("Unable to create note");
+        }
+      });
+  }
+
+  menuEvent($event:any){
     if($event=="OPEN_MENU_LEFT"){
       this.menuLeftVisible=true;
     }else if($event=="CLOSE_MENU_LEFT"){

@@ -23,6 +23,7 @@ body{
         display: flex;
         overflow: auto;
         background-color: #111;
+        margin-left: 6em;
 }
 
 .tab-contaniner .tab{
@@ -72,16 +73,19 @@ body{
         padding: 0.4em;
         background-color: #111;
         color: #EEE;
-        height: calc(100vh - 5em);
+        height: calc(100vh - 4.6em);
 }
 .btn-add-tab{
-        position: relative;
         background-color: #111;
         color: #EEE;
         outline: none;
         border: 1px solid #999;
         border-left: none;
-        min-width: 6em;       
+        min-width: 6em; 
+        position: absolute;
+        left: 0;
+        z-index: 1;
+        padding: 0.25em;      
 }
 .sidebar-left{
         position: absolute;

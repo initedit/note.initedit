@@ -5,6 +5,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { NoteCreateRequestModel } from './model/note-create-request-model';
 import { NoteTabCreateRequestModel } from './model/note-tab-create-request-model';
 import { NoteResponseModel } from './model/note-response-model';
+import Utils from './Util';
 
 @Injectable({
   providedIn: 'root'
@@ -14,9 +15,11 @@ export class NoteService {
   
   constructor( private http: HttpClient) { }
 
-  addPassword(slug:string,password:string,shouldEncrypt:boolean=false):boolean{
+  addPassword(slug:string,encToken:string,vanilaPass:string):boolean{
     //TODO : Encrypt password if required
-    localStorage.setItem(slug,password);
+    localStorage.setItem(slug,encToken);
+    let normalPassword = Utils.normalizeKey(vanilaPass);
+    localStorage.setItem(slug+"_PASS",normalPassword);
     return true;
   }
   removePassword(slug:string):boolean{
@@ -54,6 +57,17 @@ export class NoteService {
       httpOptions.headers = httpOptions.headers.append("token",token);
     }
     return this.http.get<NoteResponseModel>(this.getAPIUrl("note/"+slug+"/tab/"+tabid),httpOptions)
+  }
+  fetchNoteTabs(slug:string,ids:any[]):Observable<NoteResponseModel>{
+    let token = this.getApiToken(slug);
+    const httpOptions = {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json','Accept':'application/json'})
+    };
+    if(token){
+      httpOptions.headers = httpOptions.headers.append("token",token);
+    }
+    let strIds = ids.join(",");
+    return this.http.get<NoteResponseModel>(this.getAPIUrl("note/"+slug+"/tabs?ids="+strIds),httpOptions)
   }
 
   createNewNote(request:NoteCreateRequestModel):any{

@@ -12,7 +12,8 @@ import { HeaderNavComponent } from './header-nav/header-nav.component';
 import { NoteCollectionComponent } from './note-collection/note-collection.component';
 import { BsModelComponent } from './bs-model/bs-model.component';
 import { ClickStopPropagationDirective } from './click-stop-propagation.directive';
-import {SortablejsModule} from 'angular-sortablejs'
+import {SortablejsModule} from 'angular-sortablejs';
+import { ToastComponent } from './toast/toast.component'
 
 
 const routes: Routes = [
@@ -32,7 +33,8 @@ const routes: Routes = [
     HeaderNavComponent,
     NoteCollectionComponent,
     BsModelComponent,
-    ClickStopPropagationDirective
+    ClickStopPropagationDirective,
+    ToastComponent
   ],
   imports: [
     BrowserModule,

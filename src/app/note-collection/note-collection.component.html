@@ -1,12 +1,15 @@
+<button class="btn-add-tab" (click)="addNewNoteTab()">
+        <i class="fa fa-plus"></i> New Tab
+</button>
 <div class="tab-contaniner scroll-bar">
-  <button class="btn-add-tab" (click)="addNewNoteTab()">
-      <i class="fa fa-plus"></i> New Tab
-    </button>
+  
   <div class="tab" *ngFor="let note of noteCollection"
   [class.active]="note.id==selectedNote.id && note.order_index==selectedNote.order_index"
   [class.d-none]="note.visibility==0"
   (click)="onChangeSelectedNote(note)"
   (dblclick)="onDoubleClickTab(note,$event)"
+  #itemRef
+  [class.dummy]="scrollIntoView(itemRef,note)"
   >
     <span class="unsaved-indicator" [class.d-block]="note.modifiedContent || note.modifiedTitle">*</span>
     <input type="text" (input)="modifiedTab('title',selectedNote)" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [disabled]="!note.isTitleEnabled">
@@ -19,13 +22,13 @@
 </div>
 
 <section class="sidebar-left marker-visible">
-    <div class="menu-item" id="bookNoteBtn" >
+    <div class="menu-item" (click)="toParrent.emit('TOGGLE_MENU_LEFT')" >
         <i class="fa fa-book icon"></i> 
         <span class="title">
             <span class="hint">View Book Index(ALT+B)</span>
         </span>
     </div>
-    <div class="menu-item" id="newNoteBtn" >
+    <div class="menu-item" id="newNoteBtn" routerLink="/" >
         <i class="fa fa-plus icon"></i> 
         <span class="title">
             <span class="hint">New Note(ALT+N)</span>
@@ -59,16 +62,16 @@
         </span>
     </div>
 
-    <div class="menu-item" id="linkNoteBtn" >
+    <div class="menu-item" id="linkNoteBtn" (click)="copyCurrentNoteLink()" >
         <i class="fa fa-link icon"></i>
         <span class="title">
             <span class="hint">Copy URL(ALT+L)</span>
         </span>
     </div>
-    <div class="menu-item" id="clipboardNoteBtn" >
+    <div class="menu-item" id="clipboardNoteBtn" (click)="copyCurrentNoteText()">
         <i class="fa fa-clipboard icon"></i>
         <span class="title">
-            <span class="hint">Copy(ALT+C)</span>
+            <span class="hint" >Copy(ALT+C)</span>
         </span>
     </div>
 <!-- 

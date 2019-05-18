@@ -9,7 +9,7 @@ export default class Utils {
         }
 
 
-        static noteEncrypt(slug:string,text:string, passKey:string) { 
+        static noteEncrypt(slug:string,text:string, passKey?:string) { 
                 // An example 128-bit key (16 bytes * 8 bits/byte = 128 bits)
                 var key = Utils.getNoteKey(slug);
                 if (passKey !== undefined)
@@ -30,9 +30,13 @@ export default class Utils {
                 return encryptedHex;
 
          }
-         static noteDecrypt(slug:string,text:string) {
+         static noteDecrypt(slug:string,text:string, passKey?:string) {
                 // An example 128-bit key (16 bytes * 8 bits/byte = 128 bits)
                 var key = Utils.getNoteKey(slug);
+                if (passKey !== undefined)
+                {
+                        key = Utils.getNormalizeKey(Utils.normalizeKey(passKey));
+                }
                 var encryptedHex = text;
             // When ready to decrypt the hex string, convert it back to bytes
                 var encryptedBytes = aesjs.utils.hex.toBytes(encryptedHex);
@@ -61,6 +65,6 @@ export default class Utils {
                 return aesjs.utils.utf8.toBytes(pass);
         }
         static getNoteKey(slug:string) {
-                return Utils.getNormalizeKey(localStorage.getItem(slug));        
+                return Utils.getNormalizeKey(localStorage.getItem(slug+"_PASS"));        
         }
 }
