@@ -10,7 +10,6 @@ import { RouterModule, Routes } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http';
 import { HeaderNavComponent } from './header-nav/header-nav.component';
 import { NoteCollectionComponent } from './note-collection/note-collection.component';
-import { BsModelComponent } from './bs-model/bs-model.component';
 import { ClickStopPropagationDirective } from './click-stop-propagation.directive';
 import {SortablejsModule} from 'angular-sortablejs';
 import { ToastComponent } from './toast/toast.component'
@@ -32,7 +31,6 @@ const routes: Routes = [
     PageNotFoundComponent,
     HeaderNavComponent,
     NoteCollectionComponent,
-    BsModelComponent,
     ClickStopPropagationDirective,
     ToastComponent
   ],

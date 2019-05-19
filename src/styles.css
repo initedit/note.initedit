@@ -1,4 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
+
+
+
 body{
         overflow: hidden;
         background-color: #111;
@@ -18,12 +21,76 @@ body{
         outline: 1px solid slategrey;
 }
 
+/* 
+Home Page Style
+*/
+.home{
+        min-width: 100vh;
+        min-height: 100vh;
+        position: relative;
+        z-index: 1;
+}
+.svg-bg{
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+}
+.bg-container,.content-container{
+        position: absolute;
+        left: 0;
+        top:0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        background-color: transparent;
+}
+.bg-container{
+        background-color: #111;
+        opacity: 0.9;        
+}
+.content-container{
+        z-index: 3;
+        background-color: rgba(10,10,10,0.9);
+}
+.brand{
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 40%;
+        width: 100%;
+        text-align: center;
+        color: #EEE;
+        font-size: 16em;
+}
+.input-note{
+        position: absolute;
+        top: 60%;
+        width: 65%;
+        padding: 0.8em 0.6em;
+        left: 17.5%;
+        background-color: #333;
+        color: #EEE;
+        outline: none;
+        text-align: center;
+        border-width: 0.05em;
+        border-style:solid;
+        border-color: #111;
+}
+.input-note:hover,.input-note:focus{
+        border-color: rgb(255, 255, 255);
+}
+
+
 .tab-contaniner{
         position: relative;
         display: flex;
         overflow: auto;
         background-color: #111;
         margin-left: 6em;
+        min-height: 2em;
 }
 
 .tab-contaniner .tab{
@@ -100,7 +167,7 @@ body{
         margin-right: 0.2em;
 }
 .sidebar-left .menu-item .title{
-        display: none;
+        /* display: none; */
 }
 .bs-modal{
         position: fixed;
@@ -123,11 +190,54 @@ body{
     position: fixed;
     top: 0;
     left: 0;
-    min-width: 240px;
+    min-width: 18em;
     height: 100vh;
     overflow-y: auto;
     background-color: #FFF;
 }
 .menu-left .note-name{
         padding: 1em 0.5em;
+}
+
+/* Note Component */
+.menu-left{
+        left: -18em;
+}
+.main-container,.menu-left{
+        transition: left 0.2s linear;
+}
+.main-container{
+        position: relative;
+        left: 0;
+}
+.main-container.menu-left-visible{
+        left: 18em;
+}
+.menu-left-visible .menu-left{
+       left: 0;
+}
+.back-nav{
+        padding: 0.6em 1.255em;
+        color: white;
+        cursor: pointer;
+}
+.menu-item .title{
+        position: absolute;
+        top: -1.2em;
+        right: 0px;
+        background-color: #000;
+        color: #EEE;
+        padding: 0.2em 0.4em;
+        display: none;
+        font-size: 0.8em;
+        /* min-width: 14em; */
+        text-align: center;
+        border-radius: 0.2em;
+    
+}
+.menu-item .title .hint{
+        display: inline-block;
+}
+.menu-item:hover .title{
+        display: block;
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { NoteService } from '../note.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NoteCreateRequestModel } from '../model/note-create-request-model';
@@ -21,6 +21,13 @@ export class NoteComponent implements OnInit {
   menuLeftVisible:boolean=false;
   selectedNote:NoteTabUiModel;
   selectedNotesTabIndex:number=0;
+
+  @ViewChild("myNewPassword")
+  inputNewPasswordEL:ElementRef
+
+  @ViewChild("myPassword")
+  inputPasswordEL:ElementRef
+
   constructor(private noteService:NoteService,private router:Router,private toastService:ToastService,private route: ActivatedRoute) { 
     const fragment: string = route.snapshot.fragment;
     try{
@@ -37,6 +44,21 @@ export class NoteComponent implements OnInit {
   ngOnInit() {
     // console.log(this.router.url);
     this.refreshNoteData();
+  }
+  ngAfterViewInit() {
+    console.log('Values on ngAfterViewInit():');
+    console.log("primaryColorSample:", this.inputNewPasswordEL,this.inputPasswordEL);
+  }  
+
+  @HostListener('document:keydown', ['$event']) 
+  onKeyDown(e:KeyboardEvent) {
+    console.log(e);
+    let keyLetter = e.key.toLowerCase();
+    if(keyLetter=="escape"){
+      this.showAuthModel=false;
+      this.showCreatePassword=false;
+      this.menuEvent("CLOSE_MENU_LEFT");
+    }
   }
 
   refreshNoteData(){
@@ -84,7 +106,8 @@ export class NoteComponent implements OnInit {
       }else if(error.status==401){
         //Authorization Failed
         console.log("Error",error);
-        this.showAuthModel=true;
+        //this.showAuthModel=true;
+        this.showValidatePasswordDialog();
       }
       console.log(error);
     });
@@ -113,9 +136,11 @@ export class NoteComponent implements OnInit {
   showCreatePassword:boolean;
   noteCollectionEvent($event:any){
     if($event=="SET_PASSWORD"){
-      this.showCreatePassword=true;
+      //this.showCreatePassword=true;
+      this.showSetNewPasswordDialog();
     }else if($event=="UNLOCK"){
-      this.showAuthModel=true;
+      //this.showAuthModel=true;
+      this.showValidatePasswordDialog();
     }else if($event=="LOGOUT"){
       this.noteService.removePassword(this.getCurrentNoteSlug());
       if(this.response.info.type=="Private"){
@@ -125,7 +150,7 @@ export class NoteComponent implements OnInit {
       }
       this.toastService.showToast("Locked");
     }else if($event=="TOGGLE_MENU_LEFT"){
-      this.menuLeftVisible=true;
+      this.menuLeftVisible=!this.menuLeftVisible;
     }
   }
   setNotePassword(password:string,isPrivate:boolean){
@@ -177,10 +202,12 @@ export class NoteComponent implements OnInit {
           this.noteService.addPassword(slug, encPassword, password);
           this.showCreatePassword = false;
           this.response.info.type = request.type;
-          this.noteCollection.forEach((tab:NoteTabUiModel)=>{
-            tab.modifiedContent=true;
-            tab.modifiedTitle=true;
-          });
+          if(request.type=="Private"){
+            this.noteCollection.forEach((tab:NoteTabUiModel)=>{
+              tab.modifiedContent=true;
+              tab.modifiedTitle=true;
+            });
+          }
         }
         else {
           this.toastService.showToast("Unable to create note");
@@ -224,5 +251,24 @@ export class NoteComponent implements OnInit {
       })
       console.log(this.noteCollection,"Sorted");
     }
+  }
+
+  showSetNewPasswordDialog(){
+    this.showCreatePassword=true;
+    setTimeout(()=>{
+      (this.inputNewPasswordEL.nativeElement as HTMLInputElement).focus();
+    },50);
+  }
+  showValidatePasswordDialog(){
+    this.showAuthModel=true;
+    setTimeout(()=>{
+      (this.inputPasswordEL.nativeElement as HTMLInputElement).focus();
+    },50);
+  }
+  onSwipeLeft(e:any){
+    this.menuEvent("CLOSE_MENU_LEFT");
+  }
+  onSwipeRight(e:any){
+    this.menuEvent("OPEN_MENU_LEFT");
   }
 }

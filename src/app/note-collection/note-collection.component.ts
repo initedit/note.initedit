@@ -1,10 +1,11 @@
-import { Component, OnInit, Input, ViewChild, ElementRef, Output, EventEmitter, Inject } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, ElementRef, Output, EventEmitter, Inject, HostListener } from '@angular/core';
 import { NoteTabUiModel } from '../model/note-tab-ui-model';
 import { NoteService } from '../note.service';
 import { ToastService } from '../toast.service';
 import { NoteResponseInfoModel, NoteResponseModel } from '../model/note-response-model';
 import Utils from '../Util';
 import { DOCUMENT } from '@angular/platform-browser';
+import { Key } from 'protractor';
 
 @Component({
   selector: 'app-note-collection',
@@ -15,13 +16,12 @@ export class NoteCollectionComponent implements OnInit {
   
   noteCollection:NoteTabUiModel[];
   
-  
   selectedNote:NoteTabUiModel;
   @Input()
   set activeNote(value:NoteTabUiModel){
     this.selectedNote=value;
     if(this.selectedNote){
-      //this.fetchNoteTabContent();
+      this.fetchNoteTabContent();
     }
   }
 
@@ -58,9 +58,10 @@ export class NoteCollectionComponent implements OnInit {
       if(this.noteCollection.length>0 && !this.selectedNote){
         this.selectedNote=this.noteCollection[0];
       }
-      if(this.selectedNote){
-        this.fetchNoteTabContent();
-      }
+      // if(this.selectedNote){
+      //   this.fetchNoteTabContent();
+      // }
+      
     }
   }
 
@@ -78,6 +79,73 @@ export class NoteCollectionComponent implements OnInit {
   ngOnInit() {
     this.selectedNote = new NoteTabUiModel();
   }
+  
+  onKeyDownTextArea(e:KeyboardEvent){
+    if(e.keyCode==9 || e.which==9){
+      // let textarea = this.inputContentEl.nativeElement as HTMLTextAreaElement;
+      // e.preventDefault();
+      // var s = textarea.selectionStart;
+      // textarea.value = textarea.value.substring(0,textarea.selectionStart) + "\t" + textarea.value.substring(textarea.selectionEnd);
+      // textarea.selectionEnd = s+1; 
+    }
+  }
+
+  @HostListener('document:keydown', ['$event']) 
+  onKeyDown(e:KeyboardEvent) {
+    //console.log(e);
+    let keyLetter = e.key.toLowerCase();
+    if(e.ctrlKey){
+      if(keyLetter=="s"){
+        this.saveNotes();
+        e.preventDefault();
+      }else if(keyLetter=="m"){
+        this.toParrent.emit("TOGGLE_MENU_LEFT")
+      }
+
+    }else if(e.altKey){
+      if(keyLetter=="t"){
+        this.addNewNoteTab();
+      }else if(keyLetter=="w"){
+        this.hideNoteTab(this.selectedNote);
+      }else if(keyLetter=="l"){
+        if(this.isNoteAuthorized()){
+          this.removePassword();
+        }else{
+          if(!this.isNoteLocked()){
+            this.lockCurrentNote();
+          }
+        }
+      }else if(keyLetter=="u"){
+        if(this.isNoteLocked()){
+          if(!this.isNoteAuthorized()){
+            this.unlockCurrentNote();
+          }
+        }
+      }else if(keyLetter=="r"){
+        this.selectedNote.isTitleEnabled=true;
+        setTimeout(()=>{
+          console.log(document.querySelector(".tab.active .tab-title"));
+          let el =  (document.querySelector(".tab.active .tab-title") as HTMLInputElement);
+          el.focus();
+          el.select();
+        },50);  
+      }else if(keyLetter=="e"){
+        (this.inputContentEl.nativeElement as HTMLTextAreaElement).focus();
+        e.preventDefault();
+      }else if(keyLetter=="n"){
+        this.addNewNoteTab();
+      }
+      //Paginations
+      try{
+        let i = parseInt(keyLetter);
+        if(i>=0 || i<=9){
+          this.navigateToPosition(i);
+        }
+      }catch{
+
+      }
+    }
+  }
   ngOnChanges(){
     // console.log("ngOnChanges",this.selectedNote,this.noteCollection);
     // if(!this.isLoaded && this.noteCollection){
@@ -87,6 +155,22 @@ export class NoteCollectionComponent implements OnInit {
     // if(this.selectedNote){
     //   this.fetchNoteTabContent();
     // }
+  }
+
+  navigateToPosition(index:number){
+    let visibleNotes = this.noteCollection.filter((tab:NoteTabUiModel)=>{
+      return tab.visibility==1;
+    });
+    if(index==0){
+      this.selectedNote = visibleNotes[visibleNotes.length - 1];
+      this.fetchNoteTabContent();
+    }else{
+      if(index<=visibleNotes.length){
+        this.selectedNote = visibleNotes[index - 1];
+        this.fetchNoteTabContent();
+      }
+    }
+    
   }
 
   fetchNoteTabContent(){
@@ -309,11 +393,16 @@ export class NoteCollectionComponent implements OnInit {
   removePassword(){
     this.toParrent.emit("LOGOUT");
   }
-
+  /**
+   *checks if use has permission to perform edit/delete operation(If password has been set) 
+   */
   isNoteAuthorized(){
     return  (this.noteService.getPassword(this.slug)?true:false);
   }
 
+  /**
+   * Checks if note is locked or note
+   */
   isNoteLocked(){
     if(this.noteInfo){
       return this.noteInfo.type=="Public"?false:true;

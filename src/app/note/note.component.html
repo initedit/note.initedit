@@ -1,4 +1,7 @@
-<div class="main-container" [class.menu-left-visible]="menuLeftVisible">
+<div class="main-container" [class.menu-left-visible]="menuLeftVisible" 
+(swipeleft)="onSwipeLeft($event)"
+(swiperight)="onSwipeRight($event)"
+>
 <app-header-nav (onAction)="menuEvent($event)"></app-header-nav>
 <app-note-collection [notes]="response" [activeNote]="selectedNote" [slug]="getCurrentNoteSlug()" (onAction)="noteCollectionEvent($event)" ></app-note-collection>
 <app-toast></app-toast>
@@ -51,7 +54,7 @@
           </button>
         </div>
         <div class="modal-body">
-          <input type="text" #myNewPassword class="form-control mb-2" placeholder="type your sceret key"/>
+          <input type="text" #myNewPassword class="form-control mb-2 input-new-password" placeholder="type your sceret key"/>
           <label>
             <input type="checkbox" #isPrivate /> Make note private(Super Secure)
           </label>

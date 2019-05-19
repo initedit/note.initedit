@@ -12,26 +12,26 @@
   [class.dummy]="scrollIntoView(itemRef,note)"
   >
     <span class="unsaved-indicator" [class.d-block]="note.modifiedContent || note.modifiedTitle">*</span>
-    <input type="text" (input)="modifiedTab('title',selectedNote)" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [disabled]="!note.isTitleEnabled">
+    <input type="text" (input)="modifiedTab('title',selectedNote)" (keyup.enter)="inputContent.focus()" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [disabled]="!note.isTitleEnabled">
     <i class="fa fa-close" (click)="hideNoteTab(note)"></i>
   </div>
   
 </div>
 <div class="note-content">
-  <textarea class="writeable-content" (input)="modifiedTab('content',selectedNote)" #inputContent [(ngModel)]="selectedNote.content"></textarea>
+  <textarea class="writeable-content" (keydown)="onKeyDownTextArea($event)" (input)="modifiedTab('content',selectedNote)" #inputContent [(ngModel)]="selectedNote.content"></textarea>
 </div>
 
 <section class="sidebar-left marker-visible">
     <div class="menu-item" (click)="toParrent.emit('TOGGLE_MENU_LEFT')" >
         <i class="fa fa-book icon"></i> 
         <span class="title">
-            <span class="hint">View Book Index(ALT+B)</span>
+            <span class="hint">View&nbsp;Book(ALT+B)</span>
         </span>
     </div>
     <div class="menu-item" id="newNoteBtn" routerLink="/" >
-        <i class="fa fa-plus icon"></i> 
+        <i class="fa fa-home icon"></i> 
         <span class="title">
-            <span class="hint">New Note(ALT+N)</span>
+            <span class="hint">Home(ALT+H)</span>
         </span>
     </div>
     <div class="menu-item" id="saveNoteBtn" (click)="saveNotes()">
@@ -65,7 +65,7 @@
     <div class="menu-item" id="linkNoteBtn" (click)="copyCurrentNoteLink()" >
         <i class="fa fa-link icon"></i>
         <span class="title">
-            <span class="hint">Copy URL(ALT+L)</span>
+            <span class="hint">Copy&nbsp;URL(ALT+L)</span>
         </span>
     </div>
     <div class="menu-item" id="clipboardNoteBtn" (click)="copyCurrentNoteText()">
@@ -74,13 +74,6 @@
             <span class="hint" >Copy(ALT+C)</span>
         </span>
     </div>
-<!-- 
-    <div class="menu-item" id="printNoteBtn" >
-        <i class="fa fa-print icon"></i>
-        <span class="title">
-            <span class="hint">Print</span>
-        </span>
-    </div> -->
 
     <div class="menu-item" id="deleteNoteBtn" style="display: none;">
         <i class="fa fa-trash icon"></i>
@@ -88,11 +81,4 @@
             <span class="hint">Delete(ALT+DEL)</span>
         </span>
     </div>
-<!-- 
-    <div class="menu-item" id="downloadNoteBtn" >
-        <i class="fa fa-download icon"></i>
-        <span class="title">
-            <span class="hint">Download(ALT+D)</span>
-        </span>
-    </div> -->
 </section>

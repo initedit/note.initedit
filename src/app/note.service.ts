@@ -24,6 +24,7 @@ export class NoteService {
   }
   removePassword(slug:string):boolean{
     localStorage.removeItem(slug);
+    localStorage.removeItem(slug+"_PASS");
     return true;
   }
   getPassword(slug:string):string{

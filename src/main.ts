@@ -7,6 +7,10 @@ import { environment } from './environments/environment';
 if (environment.production) {
   enableProdMode();
 }
+/**
+ * Hammerjs must be imported for gestures
+ */
+import 'hammerjs';
 
 platformBrowserDynamic().bootstrapModule(AppModule)
   .catch(err => console.log(err));
