@@ -12,8 +12,8 @@
   [class.dummy]="scrollIntoView(itemRef,note)"
   >
     <span class="unsaved-indicator" [class.d-block]="note.modifiedContent || note.modifiedTitle">*</span>
-    <input type="text" (input)="modifiedTab('title',selectedNote)" (keyup.enter)="inputContent.focus()" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [disabled]="!note.isTitleEnabled">
-    <i class="fa fa-close" (click)="hideNoteTab(note)"></i>
+    <input type="text" #itemTitleInput (input)="modifiedTab('title',selectedNote)" (keyup.enter)="inputContent.focus()" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [disabled]="!note.isTitleEnabled">
+    <i class="fa fa-close" (click)="hideNoteTab(note)" click-stop-propagation></i>
   </div>
   
 </div>

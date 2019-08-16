@@ -6,22 +6,24 @@
 <app-note-collection [notes]="response" [activeNote]="selectedNote" [slug]="getCurrentNoteSlug()" (onAction)="noteCollectionEvent($event)" ></app-note-collection>
 <app-toast></app-toast>
 <div class="menu-left">
-  <!-- <ul class="list-group">
-      <li class="list-group-item list-group-item-action active" >
-         
-      </li>
-  </ul> -->
   <div class="bg-primary back-nav" (click)="menuLeftVisible=false"> 
     <i class="fa fa-arrow-left pr-2" aria-hidden="true"></i>
     Close
   </div>
     <ul class="list-group" [sortablejs]="noteCollection" [sortablejsOptions]="sortableOption">
 
-    <li class="list-group-item list-group-item-action" *ngFor="let note of noteCollection" (click)="selectedNote=note">
+    <li class="list-group-item list-group-item-action cursor-pointer" *ngFor="let note of noteCollection" (click)="selectedNote=note;note.visibility=1">
       {{note.title}}
 
-      <span class="badge badge-pill float-right" click-stop-propagation (click)="deleteTab(note)">
-        <i class="fa fa-trash-o"></i>
+      
+      <span class="float-right ">
+        <span class="badge badge-pill float-right">
+          <i class="fa fa-eye" *ngIf="note.visibility==1"></i>
+          <i class="fa fa-eye-slash" *ngIf="note.visibility!=1"></i>
+        </span>        
+        <span class="badge badge-pill float-right" click-stop-propagation (click)="deleteTab(note)">
+          <i class="fa fa-trash-o"></i>
+        </span>
       </span>
     </li>
     
@@ -37,7 +39,7 @@
                       </button>
                     </div>
                     <div class="modal-body">
-                      <input type="text" #myPassword class="form-control mb-2" placeholder="type your sceret key"/>
+                      <input type="password" #myPassword class="form-control mb-2" (keyup.enter)="validatePassword(myPassword.value)" placeholder="type your sceret key"/>
                       <button type="button" class="btn btn-primary w-100" (click)="validatePassword(myPassword.value)">Unlock</button>
                     </div>
                   </div>
@@ -54,7 +56,7 @@
           </button>
         </div>
         <div class="modal-body">
-          <input type="text" #myNewPassword class="form-control mb-2 input-new-password" placeholder="type your sceret key"/>
+          <input type="password" #myNewPassword (keyup.enter)="setNotePassword(myNewPassword.value,isPrivate.checked)" class="form-control mb-2 input-new-password" placeholder="type your sceret key"/>
           <label>
             <input type="checkbox" #isPrivate /> Make note private(Super Secure)
           </label>

@@ -241,3 +241,6 @@ Home Page Style
 .menu-item:hover .title{
         display: block;
 }
+.cursor-pointer{
+        cursor: pointer;
+}
