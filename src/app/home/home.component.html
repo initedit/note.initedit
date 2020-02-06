@@ -1,26 +1,13 @@
 <div class="home">
   <div class="content-container">
-    <div class="brand">
-      <!-- {{title}} -->
-      <svg xmlns="http://www.w3.org/2000/svg" width="542.752" height="189.81" viewBox="0 0 542.752 189.81">
-        <g id="Logo" transform="translate(-437.339 -56.621)">
-          <path id="e"
-            d="M57.795-60.025h-92.14q.51,21.792,11.725,33.645T8.22-14.528q22.047,0,40.526-14.528V-9.431Q31.542,3.059,3.25,3.059q-27.655,0-43.458-17.778T-56.01-64.74q0-30.458,17.268-49.638t42.884-19.18q25.616,0,39.634,16.567T57.795-70.985ZM36.385-77.739q-.127-18.1-8.73-28.165T3.76-115.972a33.762,33.762,0,0,0-25.106,10.578Q-31.669-94.816-34.091-77.739Z"
-            transform="translate(920.296 241.372)" fill="none" stroke="#707070" stroke-width="4" />
-          <path id="t"
-            d="M37.468-1.274Q30.076,2.8,17.969,2.8q-34.282,0-34.282-38.232v-77.229h-22.43V-130.5h22.43v-31.86l20.9-6.754V-130.5h32.88v17.842H4.588v73.534q0,13.126,4.46,18.734t14.783,5.607a21.973,21.973,0,0,0,13.636-4.333Z"
-            transform="translate(802.121 241.372)" fill="none" stroke="#707070" stroke-width="4" />
-          <path id="o"
-            d="M-.765,3.059q-28.929,0-46.2-18.288T-64.23-63.721q0-32.88,17.969-51.359T2.294-133.559q29.184,0,45.56,17.969T64.23-65.76q0,31.223-17.651,50.021T-.765,3.059ZM.765-115.972q-20.136,0-31.86,13.7T-42.82-64.485q0,23.194,11.852,36.576T.765-14.528q20.263,0,31.159-13.126T42.82-65q0-24.469-10.9-37.723T.765-115.972Z"
-            transform="translate(679.651 241.372)" fill="none" stroke="#707070" stroke-width="4" />
-          <path id="n"
-            d="M73.661,0H47.408L-46.644-145.666a60.867,60.867,0,0,1-5.862-11.47h-.765q1.02,5.862,1.02,25.106V0h-21.41V-182.751h27.782l91.5,143.372q5.735,8.921,7.392,12.234h.51q-1.274-7.9-1.274-26.89V-182.751h21.41Z"
-            transform="translate(513 241.372)" fill="none" stroke="#707070" stroke-width="4" />
-        </g>
-      </svg>
-
+    <div class="brand text-accent-color">
+      {{title}}
     </div>
-    <input type="text" autocomplete="false" class="input-note" placeholder="begin your story" #inputName
+    <input type="text" autocomplete="false" class="input-note" placeholder="Begin Your Story" #inputName
       (keyup.enter)="onEnter(inputName.value)" />
+      
+  </div>
+  <div class="footer-nav">
+    <a routerLink="/faq" class="faq">FAQ</a>
   </div>
 </div>

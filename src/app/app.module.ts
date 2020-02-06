@@ -1,6 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import {FormsModule } from '@angular/forms';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 
 import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
@@ -12,7 +13,11 @@ import { HeaderNavComponent } from './header-nav/header-nav.component';
 import { NoteCollectionComponent } from './note-collection/note-collection.component';
 import { ClickStopPropagationDirective } from './click-stop-propagation.directive';
 import {SortablejsModule} from 'angular-sortablejs';
-import { ToastComponent } from './toast/toast.component'
+import { ToastComponent } from './toast/toast.component';
+
+import {MatSnackBarModule} from '@angular/material/snack-bar';
+import {MatTooltipModule} from '@angular/material/tooltip';
+
 
 
 const routes: Routes = [
@@ -40,6 +45,9 @@ const routes: Routes = [
     RouterModule.forRoot(routes),
     HttpClientModule,
     SortablejsModule.forRoot({ animation: 150 }),
+    BrowserAnimationsModule,
+    MatSnackBarModule,
+    MatTooltipModule
   ],
   providers: [],
   bootstrap: [AppComponent]

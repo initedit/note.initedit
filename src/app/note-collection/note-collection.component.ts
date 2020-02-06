@@ -1,4 +1,5 @@
 import { Component, OnInit, Input, ViewChild, ElementRef, Output, EventEmitter, Inject, HostListener, ViewChildren, QueryList } from '@angular/core';
+import { DoCheck, KeyValueDiffers, KeyValueDiffer } from '@angular/core';
 import { NoteTabUiModel } from '../model/note-tab-ui-model';
 import { NoteService } from '../note.service';
 import { ToastService } from '../toast.service';
@@ -15,8 +16,24 @@ import { Router } from '@angular/router';
 export class NoteCollectionComponent implements OnInit {
 
   noteCollection: NoteTabUiModel[];
-
+  _noteDetails: NoteResponseModel;
+  noteInfo: NoteResponseInfoModel;
   selectedNote: NoteTabUiModel;
+  authorized: boolean;
+
+  @Output('onAction')
+  toParrent: EventEmitter<any> = new EventEmitter();
+
+  @ViewChild('inputContent')
+  inputContentEl: ElementRef;
+  isLoaded: boolean = false;
+
+  @ViewChildren('itemTitleInput')
+  itemTitleInputCollection: QueryList<ElementRef>;
+
+  @ViewChild('btnInputAdd')
+  btnInputAddEl: ElementRef;
+
   @Input()
   set activeNote(value: NoteTabUiModel) {
     this.selectedNote = value;
@@ -25,7 +42,6 @@ export class NoteCollectionComponent implements OnInit {
     }
   }
 
-  noteInfo: NoteResponseInfoModel;
 
   @Input()
   slug: string;
@@ -38,7 +54,6 @@ export class NoteCollectionComponent implements OnInit {
     }
   }
 
-  _noteDetails: NoteResponseModel
   @Input('notes')
   set notes(value: NoteResponseModel) {
     this._noteDetails = value;
@@ -47,6 +62,7 @@ export class NoteCollectionComponent implements OnInit {
       this.noteCollection.forEach((tab: NoteTabUiModel) => {
         if (this._noteDetails.info.type == 'Private') {
           tab.title = Utils.noteDecrypt(tab.slug, tab.title);
+
         }
       });
 
@@ -58,46 +74,49 @@ export class NoteCollectionComponent implements OnInit {
       if (this.noteCollection.length > 0 && !this.selectedNote) {
         this.selectedNote = this.noteCollection[0];
       }
-      // if(this.selectedNote){
-      //   this.fetchNoteTabContent();
-      // }
-
     }
   }
-
-  authorized: boolean
-
-  @Output('onAction')
-  toParrent: EventEmitter<any> = new EventEmitter();
-
-  @ViewChild('inputContent')
-  inputContentEl: ElementRef;
-  isLoaded: boolean = false;
-
-  @ViewChildren('itemTitleInput')
-  itemTitleInputCollection: QueryList<ElementRef>;
-
   constructor(private noteService: NoteService, private toastService: ToastService, @Inject(DOCUMENT) private document: any, private router: Router) { }
 
   ngOnInit() {
     this.selectedNote = new NoteTabUiModel();
   }
 
-  onKeyDownTextArea(e: KeyboardEvent) {
-    // if (e.keyCode === 9 || e.which === 9) {
-    // }
+  @HostListener('window:resize', ['$event'])
+  onWindowsResize(e: any) {
+    this.updateAddButtonLocation();
+  }
+
+  ngDoCheck() {
+    this.updateAddButtonLocation();
+  }
+
+  updateAddButtonLocation() {
+    if (this.itemTitleInputCollection && this.itemTitleInputCollection.length > 0) {
+      const el = this.itemTitleInputCollection.first.nativeElement as HTMLElement;
+      const tabWidth = el.parentElement.clientWidth + 1;// border width
+      const visibleCount = this.noteCollection.filter(n => n.visibility == 1).length;
+      const totalWidth = tabWidth * visibleCount;
+      const btn = this.btnInputAddEl.nativeElement as HTMLButtonElement;
+      const btnWidth = btn.clientWidth;
+      const screenWidth = document.body.clientWidth;
+      if (totalWidth > screenWidth) {
+        btn.style.left = (screenWidth - btnWidth) + "px";
+      } else {
+        btn.style.left = totalWidth + "px";
+      }
+    }
   }
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown(e: KeyboardEvent) {
-    //console.log(e);
-    let keyLetter = e.key.toLowerCase();
+    const keyLetter = e.key.toLowerCase();
     if (e.ctrlKey) {
       if (keyLetter == 's') {
         this.saveNotes();
         e.preventDefault();
       } else if (keyLetter == 'm') {
-        this.toParrent.emit('TOGGLE_MENU_LEFT')
+        this.toParrent.emit('TOGGLE_MENU_LEFT');
       }
 
     } else if (e.altKey) {
@@ -122,7 +141,6 @@ export class NoteCollectionComponent implements OnInit {
       } else if (keyLetter == 'r') {
         this.selectedNote.isTitleEnabled = true;
         setTimeout(() => {
-          console.log(document.querySelector('.tab.active .tab-title'));
           let el = (document.querySelector('.tab.active .tab-title') as HTMLInputElement);
           el.focus();
           el.select();
@@ -136,6 +154,8 @@ export class NoteCollectionComponent implements OnInit {
         this.router.navigateByUrl('/');
       } else if (keyLetter == 'b') {
         this.toParrent.emit('TOGGLE_MENU_LEFT');
+      } else if (keyLetter == 'c') {
+        this.copyCurrentNoteText();
       }
       // Paginations
       try {
@@ -143,7 +163,7 @@ export class NoteCollectionComponent implements OnInit {
         if (i >= 0 || i <= 9) {
           this.navigateToPosition(i);
         }
-      } catch{
+      } catch {
 
       }
     }
@@ -171,7 +191,6 @@ export class NoteCollectionComponent implements OnInit {
       this.noteService.fetchNoteTab(this.selectedNote.slug, this.selectedNote.id)
         .subscribe(
           response => {
-            console.log(response);
             if (response.code == 1) {
               let content = response.content[0].content;
               if (this._noteDetails.info.type == 'Private') {
@@ -181,6 +200,10 @@ export class NoteCollectionComponent implements OnInit {
             }
           }
         );
+    }
+    if (this.noteCollection) {
+      const currentIndex = this.noteCollection.filter(n => n.visibility === 1).indexOf(this.selectedNote);
+      window.location.hash = (currentIndex + 1).toString();
     }
   }
 
@@ -193,17 +216,26 @@ export class NoteCollectionComponent implements OnInit {
     }
   }
 
+  hasEditPermission() {
+    return !this.isNoteLocked() || (this.isNoteLocked() && this.isNoteAuthorized());
+  }
+
   addNewNoteTab() {
     if (this.noteCollection.length > 20) {
       this.toastService.showToast('20 tabs only');
       return;
     }
+    if (!this.hasEditPermission()) {
+      this.toastService.showToast('Unlock note to add tabs');
+      return;
+    }
+
     const tab = new NoteTabUiModel();
     tab.title = 'Untitled Document';
     tab.content = '';
     tab.slug = this.slug;
     tab.visibility = 1;
-    tab.isTitleEnabled=true;
+    tab.isTitleEnabled = true;
     let dummy = new NoteTabUiModel();
     dummy.order_index = 0;
     tab.order_index = this.noteCollection.reduce((oldVal: NoteTabUiModel, newVal: NoteTabUiModel) => oldVal.order_index > newVal.order_index ? oldVal : newVal, dummy).order_index + 1;
@@ -211,27 +243,35 @@ export class NoteCollectionComponent implements OnInit {
     this.noteCollection.push(tab);
     this.onChangeSelectedNote(tab);
     // this.inputContentEl.nativeElement.focus();
-    
-    setTimeout(()=>{
+
+    setTimeout(() => {
       const element = this.itemTitleInputCollection.last.nativeElement as HTMLInputElement;
-    element.focus();
-    if (element.nodeName.toUpperCase() == 'INPUT') {
-      setTimeout(() => {
-        element.select();
-      }, 0);
-    } else {
-      setTimeout(() => {
-        (element.querySelector('.tab-title') as HTMLInputElement).select();
-      }, 0);
-    }
-    },10);
+      element.focus();
+      if (element.nodeName.toUpperCase() == 'INPUT') {
+        setTimeout(() => {
+          element.select();
+        }, 0);
+      } else {
+        setTimeout(() => {
+          (element.querySelector('.tab-title') as HTMLInputElement).select();
+        }, 0);
+      }
+    }, 10);
   }
   hideNoteTab(note: NoteTabUiModel) {
+    if (!this.hasEditPermission()) {
+      this.toastService.showToast('Unlock note to delete tabs');
+      return;
+    }
     note.visibility = 0;
-    let isCurrentNote = note === this.selectedNote;
+    const isCurrentNote = note === this.selectedNote;
     if (!note.id) {
-      let indexOf = this.noteCollection.indexOf(note);
+      const indexOf = this.noteCollection.indexOf(note);
       this.noteCollection.splice(indexOf, 1);
+      this.handleEmptyCollection();
+      this.modifiedTab('visibility', note);
+      return;
+
     }
 
     this.handleEmptyCollection();
@@ -255,6 +295,10 @@ export class NoteCollectionComponent implements OnInit {
     }
   }
   onDoubleClickTab(tab: NoteTabUiModel, $event: MouseEvent) {
+    if (!this.hasEditPermission()) {
+      this.toastService.showToast('Unlock note to edit title');
+      return;
+    }
     tab.isTitleEnabled = true;
     const element = $event.toElement as HTMLInputElement;
 
@@ -307,7 +351,6 @@ export class NoteCollectionComponent implements OnInit {
     for (let i = 0; i < this.noteCollection.length; i++) {
       const note = this.noteCollection[i];
       if (this.slug != note.slug) {
-        console.log('Slug did not match.', 'Aborting');
         return;
       }
 
@@ -392,7 +435,7 @@ export class NoteCollectionComponent implements OnInit {
           }
         }
         tabs.push(mTab);
-      })
+      });
 
       this.noteService.createNewNoteTabs(this.slug, tabs)
         .subscribe((response: any) => {
@@ -471,5 +514,8 @@ export class NoteCollectionComponent implements OnInit {
     if (this.selectedNote == note) {
       element.parentElement.scrollLeft = element.offsetLeft;
     }
+  }
+  download(){
+    this.toParrent.emit('DOWNLOAD_CURRENT_TAB');
   }
 }

@@ -18,7 +18,8 @@ export class NoteService {
   addPassword(slug: string, encToken: string, vanilaPass: string): boolean {
     // TODO : Encrypt password if required
     localStorage.setItem(slug, encToken);
-    const normalPassword = Utils.normalizeKey(vanilaPass);
+    // const normalPassword = Utils.normalizeKey(vanilaPass);
+    const normalPassword = Utils.normalizeKey(encToken);
     localStorage.setItem(slug + '_PASS', normalPassword);
     return true;
   }
@@ -116,7 +117,6 @@ export class NoteService {
     if (token) {
       httpOptions.headers = httpOptions.headers.append('token', token);
     }
-    console.log('Now Woeking', 'httpOptions.headers.append')
     return this.http.patch(this.getAPIUrl('note/' + slug + '/tab/' + request.id), request, httpOptions)
   }
 
@@ -139,7 +139,6 @@ export class NoteService {
     if (token && token.length > 0) {
       httpOptions.headers = httpOptions.headers.append('token', token);
     }
-    console.log('token', httpOptions, token, slug, tabid);
     return this.http.delete(this.getAPIUrl('note/' + slug + '/tab/' + tabid), httpOptions)
   }
 

@@ -1,32 +1,27 @@
 import { Component, OnInit } from '@angular/core';
 import { ToastService } from '../toast.service';
-
+import { MatSnackBar, MatSnackBarConfig, MatSnackBarModule } from '@angular/material/snack-bar';
 @Component({
   selector: 'app-toast',
   templateUrl: './toast.component.html',
   styleUrls: ['./toast.component.css']
 })
 export class ToastComponent implements OnInit {
-  messages:Array<string> = new Array();
-  timer:any=null;
-  constructor(private toastService:ToastService) { }
+  messages: Array<string> = new Array();
+  timer: any = null;
+  constructor(private toastService: ToastService, private _snackBar: MatSnackBar) { }
 
   ngOnInit() {
-    this.toastService.message.subscribe(val=>{
+    this.toastService.message.subscribe(val => {
       this.messages.unshift(val);
-      if(this.timer==null){
-        this.timer=setInterval(()=>{
-          this.removeLastMessage();
-          if(this.messages.length==0){
-            clearInterval(this.timer);
-            this.timer=null;
-          }
-        },1500);
-      }
+      this._snackBar.open(val, undefined, {
+        duration: 3000,
+        panelClass: ['text-center', 'ui-toast-center']
+      });
     });
   }
 
-  removeLastMessage(){
+  removeLastMessage() {
     this.messages.pop();
   }
 

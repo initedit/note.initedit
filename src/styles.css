@@ -1,3 +1,4 @@
+@import "~@angular/material/prebuilt-themes/indigo-pink.css";
 /* You can add global styles to this file, and also import other style files */
 
 
@@ -21,11 +22,21 @@ body{
         outline: 1px solid slategrey;
 }
 
+/*
+Colors
+*/
+.text-accent-color{
+        color: #bd2121 !important;
+}
+.bg-accent-color{
+        background-color: #bd2121 !important;
+}
+
 /* 
 Home Page Style
 */
 .home{
-        min-width: 100vh;
+        min-width: 100vw;
         min-height: 100vh;
         position: relative;
         z-index: 1;
@@ -53,7 +64,7 @@ Home Page Style
 }
 .content-container{
         z-index: 3;
-        background-color: rgba(10,10,10,0.9);
+        background-color: rgba(10,10,10,1);
 }
 .brand{
         position: absolute;
@@ -63,7 +74,7 @@ Home Page Style
         width: 100%;
         text-align: center;
         color: #EEE;
-        font-size: 16em;
+        font-size: 12em;
 }
 .input-note{
         position: absolute;
@@ -78,9 +89,10 @@ Home Page Style
         border-width: 0.05em;
         border-style:solid;
         border-color: #111;
+        font-size: 1.5rem;
 }
 .input-note:hover,.input-note:focus{
-        border-color: rgb(255, 255, 255);
+        border-color: rgb(0,0,0,0.9);
 }
 
 
@@ -89,7 +101,7 @@ Home Page Style
         display: flex;
         overflow: auto;
         background-color: #111;
-        margin-left: 6em;
+        /* margin-left: 6em; */
         min-height: 2em;
 }
 
@@ -98,17 +110,17 @@ Home Page Style
         /* float: left; */
         min-width: 200px;
         cursor: pointer;
-        background-color: #666;
+        background-color: #111;
         border-bottom: 1px solid #999;
         border-right: 1px solid #999;
-        border-top: 1px solid #999;
+        /* border-top: 1px solid #999; */
         padding: 0.15em;
         display: inline-block;
         height: 2.1em;
 }
 .tab-contaniner .tab.active{
-        background-color: #111;
-        color: #EEE;
+        background-color: #666;
+        color: #FFF;
 }
 .unsaved-indicator{
         position: absolute;
@@ -123,6 +135,7 @@ Home Page Style
         border: none;
         color: #EEE;
         outline: none;
+        cursor: pointer;
 }
 .tab-contaniner .fa-close{
         position: absolute;
@@ -141,21 +154,28 @@ Home Page Style
         background-color: #111;
         color: #EEE;
         height: calc(100vh - 4.6em);
+        display: block;
+}
+.writeable-content:disabled{
+        background-color: #444;
 }
 .btn-add-tab{
         background-color: #111;
         color: #EEE;
         outline: none;
-        border: 1px solid #999;
+        border: none;
         border-left: none;
-        min-width: 6em; 
-        position: absolute;
+        min-width: 2em; 
+        position: fixed;
         left: 0;
         z-index: 1;
         padding: 0.25em;      
 }
+.menu-left-visible .btn-add-tab{
+        display: none;
+}
 .sidebar-left{
-        position: absolute;
+        position: fixed;
         bottom: 1em;
         right: 1em;
         color: #EEE;
@@ -194,6 +214,7 @@ Home Page Style
     height: 100vh;
     overflow-y: auto;
     background-color: #FFF;
+    z-index: 3;
 }
 .menu-left .note-name{
         padding: 1em 0.5em;
@@ -243,4 +264,47 @@ Home Page Style
 }
 .cursor-pointer{
         cursor: pointer;
+}
+.footer-nav{
+        position: fixed;
+        bottom: 1em;
+        left: 0;
+        right: 0;
+        text-align: center;
+        z-index: 3;
+}
+.footer-nav a{
+        color: #FFF;
+        padding: 0.8em 0.6em;
+}
+.list-group-item.selected{
+        border-left: 0.2em solid #333;
+}
+.ui-toast-center .mat-simple-snackbar{
+        text-align: center !important;
+        justify-content: center;
+}
+/*
+Mobile
+*/
+/* 
+  ##Device = Low Resolution Tablets, Mobiles (Landscape)
+  ##Screen = B/w 481px to 767px
+*/
+
+@media (max-width: 767px) {
+        .brand{
+                font-size: 6em;
+        }
+        .input-note{
+                width: 95%;
+                left: 2.5%;
+        }
+        .menu-left{
+                width:100vw;
+        }
+        .menu-left{
+                left: -100vw;
+        }
+        
 }

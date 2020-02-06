@@ -1,4 +1,4 @@
-import { Component, OnInit,ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { NoteService } from '../note.service';
 import { Router } from '@angular/router';
 
@@ -10,24 +10,18 @@ import { Router } from '@angular/router';
 
 
 export class HomeComponent implements OnInit {
-  @ViewChild('inputName') inputEl:ElementRef;
+  @ViewChild('inputName') inputEl: ElementRef;
 
-  title="Note"
-  constructor(private noteService:NoteService,private router: Router) { }
+  title = 'Note.';
+  constructor(private noteService: NoteService, private router: Router) { }
 
   ngOnInit() {
-    // var objResponse  = this.noteService.getContent("10")
-    // .subscribe(response => {
-    //   objResponse = response;
-    //   console.log(objResponse);
-    // });
-    
+
   }
   ngAfterViewInit() {
     setTimeout(() => this.inputEl.nativeElement.focus());
   }
-  onEnter(val:string){
-    //console.log(val);
-    this.router.navigate(["/"+val]);
+  onEnter(val: string) {
+    this.router.navigate(["/" + val]);
   }
 }

@@ -26,7 +26,6 @@ export default class Utils {
 
                 // To print or store the binary data, you may convert it to hex
                 var encryptedHex = aesjs.utils.hex.fromBytes(encryptedBytes);
-                console.log(encryptedHex);
                 return encryptedHex;
 
          }
@@ -48,11 +47,12 @@ export default class Utils {
             
             // Convert our bytes back into text
                 var decryptedText = aesjs.utils.utf8.fromBytes(decryptedBytes);
-                console.log(decryptedText);
             // "Text may be any length you wish, no padding is required."
             
                 return decryptedText;
          }
+
+         
 
          static normalizeKey(pass:string):string {
                 while (pass.length < 16) {

@@ -6,27 +6,29 @@
 <app-note-collection [notes]="response" [activeNote]="selectedNote" [slug]="getCurrentNoteSlug()" (onAction)="noteCollectionEvent($event)" ></app-note-collection>
 <app-toast></app-toast>
 <div class="menu-left">
-  <div class="bg-primary back-nav" (click)="menuLeftVisible=false"> 
+  <div class="bg-accent-color back-nav" (click)="menuLeftVisible=false"> 
     <i class="fa fa-arrow-left pr-2" aria-hidden="true"></i>
     Close
   </div>
+    <div class="m-2">
+      <input type="search" class="form-control" placeholder="search note" #searchInput (input)="search(searchInput.value)" />
+    </div>
     <ul class="list-group" [sortablejs]="noteCollection" [sortablejsOptions]="sortableOption">
-
-    <li class="list-group-item list-group-item-action cursor-pointer" *ngFor="let note of noteCollection" (click)="selectedNote=note;note.visibility=1">
+    <li class="list-group-item list-group-item-action cursor-pointer"
+    [class.selected]="note==selectedNote"
+    *ngFor="let note of filteredNoteCollection" (click)="selectedNote=note;note.visibility=1">
       {{note.title}}
 
-      
       <span class="float-right ">
         <span class="badge badge-pill float-right">
-          <i class="fa fa-eye" *ngIf="note.visibility==1"></i>
-          <i class="fa fa-eye-slash" *ngIf="note.visibility!=1"></i>
+          <i class="fa fa-eye"  matTooltip="Visible" *ngIf="note.visibility==1"></i>
+          <i class="fa fa-eye-slash"   matTooltip="Hidden"*ngIf="note.visibility!=1"></i>
         </span>        
         <span class="badge badge-pill float-right" click-stop-propagation (click)="deleteTab(note)">
-          <i class="fa fa-trash-o"></i>
+          <i class="fa fa-trash-o"  matTooltip="Delete Tab"></i>
         </span>
       </span>
     </li>
-    
   </ul>
 </div>
 <div class="bs-modal" [class.visible]="showAuthModel">

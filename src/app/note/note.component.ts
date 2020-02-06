@@ -17,6 +17,7 @@ import { NoteTabCreateRequestModel } from '../model/note-tab-create-request-mode
 export class NoteComponent implements OnInit, AfterViewInit {
   response: NoteResponseModel;
   noteCollection: NoteTabUiModel[];
+  filteredNoteCollection: NoteTabUiModel[];
   showAuthModel: boolean = false;
   menuLeftVisible: boolean = false;
   selectedNote: NoteTabUiModel;
@@ -65,8 +66,7 @@ export class NoteComponent implements OnInit, AfterViewInit {
       .subscribe((response: NoteResponseModel) => {
         this.response = response;
         this.noteCollection = response.content;
-        if (this.selectedNotesTabIndex >= 0 && this.noteCollection.length > this.selectedNotesTabIndex) {
-          // this.selectedNote=this.noteCollection[this.selectedNotesTabIndex];
+        if (this.selectedNotesTabIndex >= 0 && this.noteCollection.length >= this.selectedNotesTabIndex) {
           let visibleCount = 0;
           this.noteCollection.forEach((tab: NoteTabUiModel) => {
             if (tab.visibility == 1) {
@@ -75,15 +75,12 @@ export class NoteComponent implements OnInit, AfterViewInit {
             if (visibleCount == this.selectedNotesTabIndex) {
               this.selectedNote = tab;
             }
-          })
+          });
           if (!this.selectedNote && this.noteCollection.length > 0) {
             this.selectedNote = this.noteCollection[0];
           }
-          console.log(this.selectedNote, this.selectedNotesTabIndex, 'SelectedNote')
           this.selectedNotesTabIndex = -1;
-
         }
-        console.log(response, 'From note component');
       },
         (error: HttpErrorResponse) => {
           let objError = error.error;
@@ -95,31 +92,25 @@ export class NoteComponent implements OnInit, AfterViewInit {
             request.password = '';
             this.noteService.createNewNote(request)
               .subscribe(sucess => {
-                console.log(sucess);
                 this.refreshNoteData();
               },
                 (error: HttpErrorResponse) => {
-                  console.log('Unable to create new note', error)
                 });
           } else if (error.status == 401) {
-            //Authorization Failed
-            console.log('Error', error);
-            //this.showAuthModel=true;
+            // Authorization Failed
             this.showValidatePasswordDialog();
           }
-          console.log(error);
         });
   }
 
   getCurrentNoteSlug() {
-    return this.router.url.substr(1);
+    return this.route.snapshot.url[0].path;
   }
   validatePassword(password: string) {
     let slug = this.getCurrentNoteSlug();
     let encPassword = Utils.noteEncrypt(slug, '/' + slug, password);
     this.noteService.authenticate(slug, encPassword)
       .subscribe((response: NoteResponseModel) => {
-        console.log(response, 'Authenticate');
         if (response.code == 1) {
           //valid password
           this.noteService.addPassword(slug, encPassword, password);
@@ -137,7 +128,6 @@ export class NoteComponent implements OnInit, AfterViewInit {
       //this.showCreatePassword=true;
       this.showSetNewPasswordDialog();
     } else if ($event == 'UNLOCK') {
-      //this.showAuthModel=true;
       this.showValidatePasswordDialog();
     } else if ($event == 'LOGOUT') {
       this.noteService.removePassword(this.getCurrentNoteSlug());
@@ -148,7 +138,9 @@ export class NoteComponent implements OnInit, AfterViewInit {
       }
       this.toastService.showToast('Locked');
     } else if ($event == 'TOGGLE_MENU_LEFT') {
-      this.menuLeftVisible = !this.menuLeftVisible;
+      this.menuEvent("TOGGLE_MENU_LEFT");
+    } else if ($event == 'DOWNLOAD_CURRENT_TAB') {
+      this.downloadNoteTab(this.selectedNote);
     }
   }
   setNotePassword(password: string, isPrivate: boolean) {
@@ -215,11 +207,15 @@ export class NoteComponent implements OnInit, AfterViewInit {
 
   menuEvent($event: any) {
     if ($event == 'OPEN_MENU_LEFT') {
+      this.filteredNoteCollection = this.noteCollection;
       this.menuLeftVisible = true;
     } else if ($event == 'CLOSE_MENU_LEFT') {
       this.menuLeftVisible = false;
     } else if ($event == 'TOGGLE_MENU_LEFT') {
       this.menuLeftVisible = !this.menuLeftVisible;
+      if (this.menuLeftVisible) {
+        this.filteredNoteCollection = this.noteCollection;
+      }
     }
   }
   deleteTab(tab: NoteTabUiModel) {
@@ -248,7 +244,6 @@ export class NoteComponent implements OnInit, AfterViewInit {
         note.order_index = (index + 1);
         note.modifiedOrder = true;
       })
-      console.log(this.noteCollection, 'Sorted');
     }
   }
 
@@ -270,4 +265,27 @@ export class NoteComponent implements OnInit, AfterViewInit {
   onSwipeRight(e: any) {
     this.menuEvent('OPEN_MENU_LEFT');
   }
+
+
+  search(val: string) {
+    this.filteredNoteCollection = [];
+    this.noteCollection.forEach(n => {
+      if (n.title.toLowerCase().indexOf(val.toLowerCase()) !== -1) {
+        this.filteredNoteCollection.push(n);
+      }
+    });
+  }
+
+  downloadNoteTab(tabData:NoteTabUiModel) {
+
+    const tabBlog = new Blob([tabData.content], {
+        type: 'text/plain'
+    });
+    const a = document.createElement('a');
+    const url = window.URL.createObjectURL(tabBlog);
+    a.href = url;
+    a.download = tabData.title + ".txt";
+    a.click();
+    window.URL.revokeObjectURL(url);
+ }
 }
