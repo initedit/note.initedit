@@ -22,6 +22,6 @@ export class HomeComponent implements OnInit {
     setTimeout(() => this.inputEl.nativeElement.focus());
   }
   onEnter(val: string) {
-    this.router.navigate(["/" + val]);
+    this.router.navigate(["/" + val.toLowerCase()]);
   }
 }
