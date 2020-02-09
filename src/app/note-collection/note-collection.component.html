@@ -10,7 +10,7 @@
   [class.dummy]="scrollIntoView(itemRef,note)"
   >
     <span class="unsaved-indicator" [class.d-block]="note.modifiedContent || note.modifiedTitle">*</span>
-    <input type="text" #itemTitleInput (input)="modifiedTab('title',selectedNote)" (keyup.enter)="inputContent.focus()" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [disabled]="!note.isTitleEnabled">
+    <input type="text" autocapitalize="none" #itemTitleInput (input)="modifiedTab('title',selectedNote)" (keyup.enter)="inputContent.focus()" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [disabled]="!note.isTitleEnabled">
     <i class="fa fa-close"  matTooltip="Close" (click)="hideNoteTab(note)" click-stop-propagation></i>
   </div>
   <button class="btn-add-tab" #btnInputAdd (click)="addNewNoteTab()" matTooltip="add new tab">
@@ -20,7 +20,7 @@
 <div class="note-content">
   <textarea class="writeable-content"
   [disabled]="!(!isNoteLocked() || (isNoteLocked() && isNoteAuthorized()))"
-  (input)="modifiedTab('content',selectedNote)" #inputContent [(ngModel)]="selectedNote.content"></textarea>
+  (input)="modifiedTab('content',selectedNote)" #inputContent [(ngModel)]="selectedNote.content" autocapitalize="none"></textarea>
 </div>
 
 <section class="sidebar-left marker-visible">
