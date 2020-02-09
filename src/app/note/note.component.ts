@@ -104,7 +104,7 @@ export class NoteComponent implements OnInit, AfterViewInit {
   }
 
   getCurrentNoteSlug() {
-    return this.route.snapshot.url[0].path;
+    return this.route.snapshot.url[0].path.toLowerCase();
   }
   validatePassword(password: string) {
     let slug = this.getCurrentNoteSlug();
