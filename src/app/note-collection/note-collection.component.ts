@@ -321,7 +321,7 @@ export class NoteCollectionComponent implements OnInit {
       return;
     }
     tab.isTitleEnabled = true;
-    const element = $event.toElement as HTMLInputElement;
+    const element = $event.srcElement as HTMLInputElement;
 
     if (element.nodeName.toUpperCase() == 'INPUT') {
       setTimeout(() => {
