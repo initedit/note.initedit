@@ -189,9 +189,13 @@ export class NoteCollectionComponent implements OnInit {
     if (index === 0) {
       this.selectedNote = visibleNotes[visibleNotes.length - 1];
       this.fetchNoteTabContent();
+      this.scrollToNoteElement(this.selectedNote)
+
     } else {
       if (index <= visibleNotes.length) {
         this.selectedNote = visibleNotes[index - 1];
+        this.scrollToNoteElement(this.selectedNote)
+
         this.fetchNoteTabContent();
       }
     }
@@ -226,15 +230,17 @@ export class NoteCollectionComponent implements OnInit {
       if (this.selectedNote.id) {
         this.fetchNoteTabContent();
       }
+      this.scrollToNoteElement(note)
+    }
+  }
 
+  scrollToNoteElement(note:NoteTabUiModel){
       //Scroll To Left Position
       var position = this.noteCollection.indexOf(note)
       var el = this.tabs.toArray()[position].nativeElement as HTMLDivElement
       var div = this.topScrollbar.nativeElement as HTMLDivElement
       // div.scrollLeft = el.offsetLeft;
       div.scrollTo({ left: el.offsetLeft, behavior: 'smooth' })
-
-    }
   }
 
   hasEditPermission() {
