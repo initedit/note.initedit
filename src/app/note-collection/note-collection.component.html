@@ -6,10 +6,10 @@
       <div class="tab" *ngFor="let note of noteCollection"
       [class.active]="note.id==selectedNote.id && note.order_index==selectedNote.order_index"
       [class.d-none]="note.visibility==0"
+      #itemRef
       (click)="onChangeSelectedNote(note)"
       (dblclick)="onDoubleClickTab(note,$event)"
-      #itemRef
-      [class.dummy]="scrollIntoView(itemRef,note)"
+
       >
         <span class="unsaved-indicator" [class.d-block]="note.modifiedContent || note.modifiedTitle">*</span>
         <input type="text" autocapitalize="none" #itemTitleInput (input)="modifiedTab('title',selectedNote)" (keyup.enter)="inputContent.focus()" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [disabled]="!note.isTitleEnabled">

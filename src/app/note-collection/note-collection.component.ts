@@ -41,6 +41,9 @@ export class NoteCollectionComponent implements OnInit {
 
   tabScrollLeft: number
 
+  @ViewChildren('itemRef')
+  tabs:QueryList<ElementRef>
+
   @Input()
   set activeNote(value: NoteTabUiModel) {
     this.selectedNote = value;
@@ -223,6 +226,13 @@ export class NoteCollectionComponent implements OnInit {
       if (this.selectedNote.id) {
         this.fetchNoteTabContent();
       }
+
+      //Scroll To Left Position
+      var position = this.noteCollection.indexOf(note)
+      var el = this.tabs.toArray()[position].nativeElement as HTMLDivElement
+      var div = this.topScrollbar.nativeElement as HTMLDivElement
+      div.scrollLeft = el.offsetLeft;
+
     }
   }
 
@@ -520,11 +530,6 @@ export class NoteCollectionComponent implements OnInit {
     this.copyText(this.document.location.href);
     this.toastService.showToast('Copied link');
   }
-  scrollIntoView(element: HTMLElement, note: NoteTabUiModel) {
-    if (this.selectedNote == note) {
-      element.parentElement.scrollLeft = element.offsetLeft;
-    }
-  }
   download(){
     this.toParrent.emit('DOWNLOAD_CURRENT_TAB');
   }
@@ -533,7 +538,5 @@ export class NoteCollectionComponent implements OnInit {
     event.stopPropagation()
     var div = this.topScrollbar.nativeElement as HTMLDivElement
     div.scrollLeft -= event.deltaY*3;
-    // this.topScrollbar.nativeElement.scrollTo({ left: (this.topScrollbar.nativeElement.scrollLeft + 150), behavior: 'smooth' })
-
   }
 }
