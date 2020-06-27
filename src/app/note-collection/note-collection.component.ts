@@ -231,7 +231,8 @@ export class NoteCollectionComponent implements OnInit {
       var position = this.noteCollection.indexOf(note)
       var el = this.tabs.toArray()[position].nativeElement as HTMLDivElement
       var div = this.topScrollbar.nativeElement as HTMLDivElement
-      div.scrollLeft = el.offsetLeft;
+      // div.scrollLeft = el.offsetLeft;
+      div.scrollTo({ left: el.offsetLeft, behavior: 'smooth' })
 
     }
   }
