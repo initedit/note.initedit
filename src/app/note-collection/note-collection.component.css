@@ -16,7 +16,7 @@
 
 .tab-contaniner .tab{
   position: relative;
-  min-width: 200px;
+  width: 200px;
   cursor: pointer;
   background-color: #111;
   border-bottom: 1px solid #999;
