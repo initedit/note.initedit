@@ -13,7 +13,7 @@
     <ul class="list-group" [sortablejs]="noteCollection" [sortablejsOptions]="sortableOption">
     <li class="list-group-item list-group-item-action cursor-pointer"
     [class.selected]="note==selectedNote"
-    *ngFor="let note of filteredNoteCollection" (click)="selectedNote=note;note.visibility=1">
+    *ngFor="let note of filteredNoteCollection" (click)="updateSelectedNote(note)">
       {{note.title}}
 
       <span class="float-right ">

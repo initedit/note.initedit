@@ -8,6 +8,7 @@ import Utils from '../Util';
 import { ToastService } from '../toast.service';
 import { NoteTabUiModel } from '../model/note-tab-ui-model';
 import { NoteTabCreateRequestModel } from '../model/note-tab-create-request-model';
+import { NoteCollectionComponent } from '../note-collection/note-collection.component';
 
 @Component({
   selector: 'app-note',
@@ -28,6 +29,10 @@ export class NoteComponent implements OnInit, AfterViewInit {
 
   @ViewChild('myPassword')
   inputPasswordEL: ElementRef
+
+  @ViewChild(NoteCollectionComponent)
+  noteCollectionComponent: NoteCollectionComponent
+
 
   constructor(private noteService: NoteService, private router: Router, private toastService: ToastService, private route: ActivatedRoute) {
     const fragment: string = route.snapshot.fragment;
@@ -285,4 +290,9 @@ export class NoteComponent implements OnInit, AfterViewInit {
     a.click();
     window.URL.revokeObjectURL(url);
  }
+
+ updateSelectedNote(note:NoteTabUiModel){
+  this.noteCollectionComponent.onChangeSelectedNote(note)
+ }
+
 }
