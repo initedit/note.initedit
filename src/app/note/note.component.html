@@ -1,12 +1,9 @@
-<div class="main-container" [class.menu-left-visible]="menuLeftVisible" 
-(swipeleft)="onSwipeLeft($event)"
-(swiperight)="onSwipeRight($event)"
->
+<div class="main-container" [class.menu-left-visible]="menuLeftVisible">
 <app-header-nav (onAction)="menuEvent($event)"></app-header-nav>
 <app-note-collection [notes]="response" [activeNote]="selectedNote" [slug]="getCurrentNoteSlug()" (onAction)="noteCollectionEvent($event)" ></app-note-collection>
 <app-toast></app-toast>
 <div class="menu-left">
-  <div class="bg-accent-color back-nav" (click)="menuLeftVisible=false"> 
+  <div class="bg-accent-color back-nav" (click)="menuLeftVisible=false">
     <i class="fa fa-arrow-left pr-2" aria-hidden="true"></i>
     Close
   </div>
@@ -23,7 +20,7 @@
         <span class="badge badge-pill float-right">
           <i class="fa fa-eye"  matTooltip="Visible" *ngIf="note.visibility==1"></i>
           <i class="fa fa-eye-slash"   matTooltip="Hidden"*ngIf="note.visibility!=1"></i>
-        </span>        
+        </span>
         <span class="badge badge-pill float-right" click-stop-propagation (click)="deleteTab(note)">
           <i class="fa fa-trash-o"  matTooltip="Delete Tab"></i>
         </span>
