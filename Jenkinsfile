@@ -3,6 +3,9 @@ def git_branch = 'master'
 
 pipeline
 {
+    options {
+        timeout(time: 10, unit: 'MINUTES') 
+    }
     agent{
         label 'lp-knode-02'
     }
