@@ -285,6 +285,10 @@ Home Page Style
         text-align: center !important;
         justify-content: center;
 }
+.tab.active .tab-contaniner .fa-close {
+background-color: #666;
+    padding-left: 0.2em;
+}
 /*
 Mobile
 */
