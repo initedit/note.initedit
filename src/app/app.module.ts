@@ -23,7 +23,7 @@ import {MatTooltipModule} from '@angular/material/tooltip';
 const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: ':slug', component: NoteComponent },
-  { path: '**', component: PageNotFoundComponent },
+  { path: '**', component: NoteComponent },
 ];
 
 

@@ -237,10 +237,12 @@ export class NoteCollectionComponent implements OnInit {
   scrollToNoteElement(note:NoteTabUiModel){
       //Scroll To Left Position
       var position = this.noteCollection.indexOf(note)
-      var el = this.tabs.toArray()[position].nativeElement as HTMLDivElement
-      var div = this.topScrollbar.nativeElement as HTMLDivElement
-      // div.scrollLeft = el.offsetLeft;
-      div.scrollTo({ left: el.offsetLeft, behavior: 'smooth' })
+      if (this.tabs.length>0 && this.tabs.toArray()[position]){
+        var el = this.tabs.toArray()[position].nativeElement as HTMLDivElement
+        var div = this.topScrollbar.nativeElement as HTMLDivElement
+        // div.scrollLeft = el.offsetLeft;
+        div.scrollTo({ left: el.offsetLeft, behavior: 'smooth' })
+      }
   }
 
   hasEditPermission() {
