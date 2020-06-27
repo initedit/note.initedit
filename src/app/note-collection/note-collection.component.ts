@@ -532,7 +532,7 @@ export class NoteCollectionComponent implements OnInit {
   onTabMouseWheel(event:WheelEvent){
     event.stopPropagation()
     var div = this.topScrollbar.nativeElement as HTMLDivElement
-    div.scrollLeft-= event.deltaY*10;
+    div.scrollLeft -= event.deltaY*3;
     // this.topScrollbar.nativeElement.scrollTo({ left: (this.topScrollbar.nativeElement.scrollLeft + 150), behavior: 'smooth' })
 
   }
