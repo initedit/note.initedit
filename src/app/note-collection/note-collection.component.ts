@@ -11,7 +11,9 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'app-note-collection',
   templateUrl: './note-collection.component.html',
-  styleUrls: []
+  styleUrls: [
+    './note-collection.component.css',
+  ]
 })
 export class NoteCollectionComponent implements OnInit {
 
@@ -33,6 +35,11 @@ export class NoteCollectionComponent implements OnInit {
 
   @ViewChild('btnInputAdd')
   btnInputAddEl: ElementRef;
+
+  @ViewChild('tabScrollBar')
+  topScrollbar: ElementRef;
+
+  tabScrollLeft: number
 
   @Input()
   set activeNote(value: NoteTabUiModel) {
@@ -520,5 +527,13 @@ export class NoteCollectionComponent implements OnInit {
   }
   download(){
     this.toParrent.emit('DOWNLOAD_CURRENT_TAB');
+  }
+
+  onTabMouseWheel(event:WheelEvent){
+    event.stopPropagation()
+    var div = this.topScrollbar.nativeElement as HTMLDivElement
+    div.scrollLeft-= event.deltaY*10;
+    // this.topScrollbar.nativeElement.scrollTo({ left: (this.topScrollbar.nativeElement.scrollLeft + 150), behavior: 'smooth' })
+
   }
 }

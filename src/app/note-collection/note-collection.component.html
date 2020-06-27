@@ -1,21 +1,25 @@
 
-<div class="tab-contaniner scroll-bar">
-  
-  <div class="tab" *ngFor="let note of noteCollection"
-  [class.active]="note.id==selectedNote.id && note.order_index==selectedNote.order_index"
-  [class.d-none]="note.visibility==0"
-  (click)="onChangeSelectedNote(note)"
-  (dblclick)="onDoubleClickTab(note,$event)"
-  #itemRef
-  [class.dummy]="scrollIntoView(itemRef,note)"
-  >
-    <span class="unsaved-indicator" [class.d-block]="note.modifiedContent || note.modifiedTitle">*</span>
-    <input type="text" autocapitalize="none" #itemTitleInput (input)="modifiedTab('title',selectedNote)" (keyup.enter)="inputContent.focus()" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [disabled]="!note.isTitleEnabled">
-    <i class="fa fa-close"  matTooltip="Close" (click)="hideNoteTab(note)" click-stop-propagation></i>
+<div class="tabs-scrollbar-container scroll-bar" #tabScrollBar >
+  <div class="tab-scrollerbar"  (mousewheel)="onTabMouseWheel($event)">
+    <div class="tab-contaniner " >
+
+      <div class="tab" *ngFor="let note of noteCollection"
+      [class.active]="note.id==selectedNote.id && note.order_index==selectedNote.order_index"
+      [class.d-none]="note.visibility==0"
+      (click)="onChangeSelectedNote(note)"
+      (dblclick)="onDoubleClickTab(note,$event)"
+      #itemRef
+      [class.dummy]="scrollIntoView(itemRef,note)"
+      >
+        <span class="unsaved-indicator" [class.d-block]="note.modifiedContent || note.modifiedTitle">*</span>
+        <input type="text" autocapitalize="none" #itemTitleInput (input)="modifiedTab('title',selectedNote)" (keyup.enter)="inputContent.focus()" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [disabled]="!note.isTitleEnabled">
+        <i class="fa fa-close"  matTooltip="Close" (click)="hideNoteTab(note)" click-stop-propagation></i>
+      </div>
+      <button class="btn-add-tab" #btnInputAdd (click)="addNewNoteTab()" matTooltip="add new tab">
+        <i class="fa fa-plus"></i>
+      </button>
+    </div>
   </div>
-  <button class="btn-add-tab" #btnInputAdd (click)="addNewNoteTab()" matTooltip="add new tab">
-    <i class="fa fa-plus"></i>
-  </button>  
 </div>
 <div class="note-content">
   <textarea class="writeable-content"
