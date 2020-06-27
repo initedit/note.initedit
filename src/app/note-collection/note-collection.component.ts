@@ -61,7 +61,10 @@ export class NoteCollectionComponent implements OnInit {
       this.noteCollection = this._noteDetails.content;
       this.noteCollection.forEach((tab: NoteTabUiModel) => {
         if (this._noteDetails.info.type == 'Private') {
+          // console.log("Called",tab,tab.title)
+
           tab.title = Utils.noteDecrypt(tab.slug, tab.title);
+          // console.log("Called",tab,tab.title)
 
         }
       });
@@ -380,7 +383,7 @@ export class NoteCollectionComponent implements OnInit {
 
     if (modifiedTab.length > 0) {
 
-      // create new element so that if note is private 
+      // create new element so that if note is private
       // then it will impact UI if content encrypted
       const tabs = new Array<NoteTabUiModel>();
       modifiedTab.forEach((mItem: NoteTabUiModel, index: number) => {
@@ -414,7 +417,7 @@ export class NoteCollectionComponent implements OnInit {
     }
     if (newTabs.length > 0) {
 
-      // create new element so that if note is private 
+      // create new element so that if note is private
       // then it will impact UI if content encrypted
       const tabs = new Array<NoteTabUiModel>();
       newTabs.forEach((mItem: NoteTabUiModel, index: number) => {
@@ -466,7 +469,7 @@ export class NoteCollectionComponent implements OnInit {
     this.toParrent.emit('LOGOUT');
   }
   /**
-   *checks if use has permission to perform edit/delete operation(If password has been set) 
+   *checks if use has permission to perform edit/delete operation(If password has been set)
    */
   isNoteAuthorized() {
     return (this.noteService.getPassword(this.slug) ? true : false);

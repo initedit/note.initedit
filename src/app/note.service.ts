@@ -11,7 +11,7 @@ import Utils from './Util';
   providedIn: 'root'
 })
 export class NoteService {
-  private baseUrl = '//api.note.initedit.com/public/api/';
+  private baseUrl = 'https://api.note.initedit.com/public/api/';
 
   constructor(private http: HttpClient) { }
 

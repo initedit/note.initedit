@@ -227,6 +227,8 @@ export class NoteComponent implements OnInit, AfterViewInit {
           } else {
             this.toastService.showToast('Unable to delete tab');
           }
+        },err=>{
+          //Handle Authorization Rejection
         });
     } else {
       this.removeNoteTabFromCollection(tab);
