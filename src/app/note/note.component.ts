@@ -261,12 +261,7 @@ export class NoteComponent implements OnInit, AfterViewInit {
       (this.inputPasswordEL.nativeElement as HTMLInputElement).focus();
     }, 50);
   }
-  onSwipeLeft(e: any) {
-    this.menuEvent('CLOSE_MENU_LEFT');
-  }
-  onSwipeRight(e: any) {
-    this.menuEvent('OPEN_MENU_LEFT');
-  }
+
 
 
   search(val: string) {
