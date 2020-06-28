@@ -548,7 +548,17 @@ export class NoteCollectionComponent implements OnInit {
   onTabMouseWheel(event:WheelEvent){
     event.stopPropagation()
     var div = this.topScrollbar.nativeElement as HTMLDivElement
-    div.scrollLeft -= event.deltaY*3;
+    var delta = event.deltaY;
+
+    if(delta==undefined){
+      if (event.detail>0){
+        delta = 30;
+      }else{
+        delta = -30;
+      }
+    }
+
+    div.scrollLeft -= delta*3;
   }
 
   showConfirmDeleteBox(){

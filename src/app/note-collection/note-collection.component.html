@@ -1,6 +1,6 @@
 
 <div class="tabs-scrollbar-container scroll-bar" #tabScrollBar >
-  <div class="tab-scrollerbar"  (mousewheel)="onTabMouseWheel($event)">
+  <div class="tab-scrollerbar"  (mousewheel)="onTabMouseWheel($event)" (DOMMouseScroll)="onTabMouseWheel($event)">
     <div class="tab-contaniner " >
 
       <div class="tab" *ngFor="let note of noteCollection"
