@@ -1,8 +1,18 @@
 <div class="container-fluid">
-  <div class="row">
+  <div class="row" >
     <div class="col-sm-12 nav-container">
       <i class="fa fa-bars cursor-pointer" (click)="toParrent.emit('TOGGLE_MENU_LEFT')"></i>
-      <span class="brand-name cursor-pointer ml-4" routerLink="/">Note.</span>
+      <span class="brand-name cursor-pointer ml-4"  routerLink="/">Note.</span>
+      <i class="fa fa-info cursor-pointer info-button" matRipple (click)="onInfoClicked($event)"></i>
     </div>
   </div>
+</div>
+
+<div class="about-us" *ngIf="showAboutUs">
+  <i class="fa fa-close cursor-pointer info-button-close" (click)="onInfoClosed()"></i>
+
+    A
+    <br/>Product
+    <br/>By
+    <br/>Initedit
 </div>
