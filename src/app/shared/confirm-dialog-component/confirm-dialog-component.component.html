@@ -1,6 +1,6 @@
-<h1 mat-dialog-title>Delete?</h1>
+<h1 mat-dialog-title>{{data.Title}}</h1>
 <div mat-dialog-content>
-  <p>Are you sure you want to delete all Notes?</p>
+  <p>{{data.Message}}</p>
 </div>
 <div mat-dialog-actions>
   <button mat-raised-button (click)="onNoClick()" cdkFocusInitial color="primary">No Thanks</button>
