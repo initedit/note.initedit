@@ -7,6 +7,8 @@ import { NoteResponseInfoModel, NoteResponseModel } from '../model/note-response
 import Utils from '../Util';
 import { DOCUMENT } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';
 
 @Component({
   selector: 'app-note-collection',
@@ -89,7 +91,7 @@ export class NoteCollectionComponent implements OnInit {
       }
     }
   }
-  constructor(private noteService: NoteService, private toastService: ToastService, @Inject(DOCUMENT) private document: any, private router: Router) { }
+  constructor(private noteService: NoteService, private toastService: ToastService, @Inject(DOCUMENT) private document: any, private router: Router,public dialog: MatDialog) { }
 
   ngOnInit() {
     this.selectedNote = new NoteTabUiModel();
@@ -548,4 +550,24 @@ export class NoteCollectionComponent implements OnInit {
     var div = this.topScrollbar.nativeElement as HTMLDivElement
     div.scrollLeft -= event.deltaY*3;
   }
+
+  showConfirmDeleteBox(){
+    const dialogRef = this.dialog.open(ConfirmDialogComponentComponent,{
+      data:{
+        Title:"Delete?",
+        Message:"Are you sure you want to delete all notes?"
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if(result){
+        this.deleteNote()
+      }
+    });
+  }
+
+  deleteNote(){
+    this.toParrent.emit("DELETE_NOTE")
+  }
+
 }

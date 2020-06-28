@@ -146,6 +146,8 @@ export class NoteComponent implements OnInit, AfterViewInit {
       this.menuEvent("TOGGLE_MENU_LEFT");
     } else if ($event == 'DOWNLOAD_CURRENT_TAB') {
       this.downloadNoteTab(this.selectedNote);
+    } else if ($event == 'DELETE_NOTE') {
+      this.deleteNote(this.selectedNote);
     }
   }
   setNotePassword(password: string, isPrivate: boolean) {
@@ -239,11 +241,28 @@ export class NoteComponent implements OnInit, AfterViewInit {
       this.removeNoteTabFromCollection(tab);
     }
   }
+  deleteNote(tab: NoteTabUiModel) {
+    if (tab) {
+      this.noteService.deleteNote(tab.slug)
+        .subscribe((response: NoteResponseModel) => {
+          if (response.code == 1) {
+            this.refreshNoteData()
+          } else {
+            this.toastService.showToast('Unable to delete note.');
+          }
+        },err=>{
+          //Handle Authorization Rejection
+        });
+    } else {
+      this.toastService.showToast('Something went wrong.Try again after some time');
+    }
+  }
   removeNoteTabFromCollection(tab: NoteTabUiModel) {
     let index = this.noteCollection.indexOf(tab);
     this.noteCollection.splice(index, 1);
     this.toastService.showToast('Deleted tabs');
   }
+
 
   sortableOption = {
     onUpdate: (event: any) => {
