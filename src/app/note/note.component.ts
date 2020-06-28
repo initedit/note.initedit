@@ -276,6 +276,9 @@ export class NoteComponent implements OnInit, AfterViewInit {
   removeNoteTabFromCollection(tab: NoteTabUiModel) {
     let index = this.noteCollection.indexOf(tab);
     this.noteCollection.splice(index, 1);
+    if (this.noteCollection.filter(n=>n.visibility).length==0){
+      this.noteCollectionComponent.addNewNoteTab()
+    }
     this.toastService.showToast('Deleted tabs');
   }
 
