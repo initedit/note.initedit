@@ -122,9 +122,13 @@ Home Page Style
         left: 0;
         z-index: 1;
         padding: 0.25em;
+        transition: visibility 2s;
+        visibility: visible;
+
 }
 .menu-left-visible .btn-add-tab{
-        display: none;
+        opacity: 0;
+        visibility: hidden;
 }
 .sidebar-left{
         position: fixed;
