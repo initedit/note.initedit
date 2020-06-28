@@ -330,6 +330,7 @@ export class NoteComponent implements OnInit, AfterViewInit {
  }
 
  updateSelectedNote(note:NoteTabUiModel){
+   this.selectedNote = note;
   this.noteCollectionComponent.onChangeSelectedNote(note)
  }
 

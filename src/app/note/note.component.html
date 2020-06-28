@@ -2,7 +2,7 @@
 <app-header-nav (onAction)="menuEvent($event)"></app-header-nav>
 <app-note-collection [notes]="response" [activeNote]="selectedNote" [slug]="getCurrentNoteSlug()" (onAction)="noteCollectionEvent($event)" ></app-note-collection>
 <app-toast></app-toast>
-<div class="menu-left">
+<div class="menu-left scroll-bar">
   <div class="bg-accent-color back-nav" (click)="menuLeftVisible=false">
     <i class="fa fa-arrow-left pr-2" aria-hidden="true"></i>
     Close
