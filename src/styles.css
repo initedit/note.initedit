@@ -55,6 +55,10 @@ body{
 .scroll-bar::-webkit-scrollbar-corner {
   background: transparent;
 }
+:root{
+  scrollbar-color: #ffffff #666666 !important;
+  scrollbar-width: thin !important;
+}
 
 /*
 Colors
