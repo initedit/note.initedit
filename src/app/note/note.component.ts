@@ -9,6 +9,8 @@ import { ToastService } from '../toast.service';
 import { NoteTabUiModel } from '../model/note-tab-ui-model';
 import { NoteTabCreateRequestModel } from '../model/note-tab-create-request-model';
 import { NoteCollectionComponent } from '../note-collection/note-collection.component';
+import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-note',
@@ -34,7 +36,7 @@ export class NoteComponent implements OnInit, AfterViewInit {
   noteCollectionComponent: NoteCollectionComponent
 
 
-  constructor(private noteService: NoteService, private router: Router, private toastService: ToastService, private route: ActivatedRoute) {
+  constructor(private noteService: NoteService, private router: Router, private toastService: ToastService, private route: ActivatedRoute,public dialog: MatDialog) {
     const fragment: string = route.snapshot.fragment;
     try {
       let i = parseInt(fragment);
@@ -224,6 +226,20 @@ export class NoteComponent implements OnInit, AfterViewInit {
         this.filteredNoteCollection = this.noteCollection;
       }
     }
+  }
+  showDeleteConfirmationTab(tab: NoteTabUiModel){
+    const dialogRef = this.dialog.open(ConfirmDialogComponentComponent,{
+      data:{
+        Title:"Delete?",
+        Message:"Are you sure you want to delete tab?"
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if(result){
+        this.deleteTab(tab)
+      }
+    });
   }
   deleteTab(tab: NoteTabUiModel) {
     if (tab.id) {

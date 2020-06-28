@@ -21,7 +21,7 @@
           <i class="fa fa-eye"  matTooltip="Visible" *ngIf="note.visibility==1"></i>
           <i class="fa fa-eye-slash"   matTooltip="Hidden"*ngIf="note.visibility!=1"></i>
         </span>
-        <span class="badge badge-pill float-right" click-stop-propagation (click)="deleteTab(note)">
+        <span class="badge badge-pill float-right" click-stop-propagation (click)="showDeleteConfirmationTab(note)">
           <i class="fa fa-trash-o"  matTooltip="Delete Tab"></i>
         </span>
       </span>
