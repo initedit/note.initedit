@@ -17,7 +17,6 @@ import { ToastComponent } from './toast/toast.component';
 
 import {MatSnackBarModule} from '@angular/material/snack-bar';
 import {MatTooltipModule} from '@angular/material/tooltip';
-import { SharedModuleModule } from './shared-module/shared-module.module';
 import { SharedModule } from './shared/shared.module';
 
 
