@@ -216,7 +216,7 @@ Home Page Style
 
 /* Note Component */
 .menu-left{
-        left: -18em;
+        left: -30em;
 }
 .main-container,.menu-left{
         transition: left 0.2s linear;
