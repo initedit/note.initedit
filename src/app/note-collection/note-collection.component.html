@@ -21,7 +21,7 @@
 </div>
 <div class="note-content">
   <textarea class="writeable-content scroll-bar"
-  [disabled]="!(!isNoteLocked() || (isNoteLocked() && isNoteAuthorized()))"
+  [readOnly]="!(!isNoteLocked() || (isNoteLocked() && isNoteAuthorized()))"
   (input)="modifiedTab('content',selectedNote)" #inputContent [(ngModel)]="selectedNote.content" autocapitalize="none"></textarea>
 </div>
 

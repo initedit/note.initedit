@@ -146,7 +146,7 @@ Home Page Style
         height: calc(100vh - 4.6em);
         display: block;
 }
-.writeable-content:disabled{
+.writeable-content:read-only{
         background-color: #444;
 }
 .btn-add-tab{
