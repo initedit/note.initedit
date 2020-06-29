@@ -553,7 +553,8 @@ export class NoteCollectionComponent implements OnInit {
     var delta = event.deltaY;
 
     if(delta==undefined){
-      if (event.detail>0){
+      var detail = event.detail==0?event.wheelDelta:event.detail
+      if (detail>0){
         delta = 30;
       }else{
         delta = -30;
