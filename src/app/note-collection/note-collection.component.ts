@@ -226,13 +226,15 @@ export class NoteCollectionComponent implements OnInit {
     }
   }
 
-  onChangeSelectedNote(note: NoteTabUiModel) {
+  onChangeSelectedNote(note: NoteTabUiModel,scrollToElement:boolean) {
     if (this.selectedNote != note) {
       this.selectedNote = note;
       if (this.selectedNote.id) {
         this.fetchNoteTabContent();
       }
-      this.scrollToNoteElement(note)
+      if (scrollToElement){
+        this.scrollToNoteElement(note)
+      }
     }
   }
 
@@ -272,7 +274,7 @@ export class NoteCollectionComponent implements OnInit {
     tab.order_index = this.noteCollection.reduce((oldVal: NoteTabUiModel, newVal: NoteTabUiModel) => oldVal.order_index > newVal.order_index ? oldVal : newVal, dummy).order_index + 1;
 
     this.noteCollection.push(tab);
-    this.onChangeSelectedNote(tab);
+    this.onChangeSelectedNote(tab,true);
     // this.inputContentEl.nativeElement.focus();
 
     setTimeout(() => {
@@ -314,13 +316,13 @@ export class NoteCollectionComponent implements OnInit {
         return item.order_index > note.order_index && item.visibility == 1;
       }).shift();
       if (nextTab) {
-        this.onChangeSelectedNote(nextTab);
+        this.onChangeSelectedNote(nextTab,false);
       } else {
         let previousTab = this.noteCollection.filter((item: NoteTabUiModel) => {
           return item.order_index < note.order_index && item.visibility == 1;
         }).pop();
         if (previousTab) {
-          this.onChangeSelectedNote(previousTab);
+          this.onChangeSelectedNote(previousTab,false);
         }
       }
     }
