@@ -2,7 +2,7 @@
 <div mat-dialog-content>
   <p>{{data.Message}}</p>
 </div>
-<div mat-dialog-actions>
-  <button mat-raised-button (click)="onNoClick()" cdkFocusInitial color="primary">No Thanks</button>
-  <button mat-raised-button (click)="onYesClick()" color="warn">Ok</button>
+<div mat-dialog-actions class="float-right">
+  <button mat-raised-button  (click)="onNoClick()" cdkFocusInitial color="primary">No Thanks</button>
+  <button mat-raised-button  (click)="onYesClick()" color="warn">Ok</button>
 </div>
