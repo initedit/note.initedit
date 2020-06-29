@@ -36,6 +36,9 @@ export class NoteComponent implements OnInit, AfterViewInit {
   @ViewChild(NoteCollectionComponent)
   noteCollectionComponent: NoteCollectionComponent
 
+  @ViewChild("searchInput")
+  searchInput:ElementRef<HTMLInputElement>
+
 
   constructor(private noteService: NoteService, private router: Router, private toastService: ToastService, private route: ActivatedRoute,public dialog: MatDialog) {
     const fragment: string = route.snapshot.fragment;
@@ -219,11 +222,13 @@ export class NoteComponent implements OnInit, AfterViewInit {
     if ($event == 'OPEN_MENU_LEFT') {
       this.filteredNoteCollection = this.noteCollection;
       this.menuLeftVisible = true;
+      (this.searchInput.nativeElement as HTMLInputElement).focus()
     } else if ($event == 'CLOSE_MENU_LEFT') {
       this.menuLeftVisible = false;
     } else if ($event == 'TOGGLE_MENU_LEFT') {
       this.menuLeftVisible = !this.menuLeftVisible;
       if (this.menuLeftVisible) {
+        (this.searchInput.nativeElement as HTMLInputElement).focus()
         this.filteredNoteCollection = this.noteCollection;
       }
     }
