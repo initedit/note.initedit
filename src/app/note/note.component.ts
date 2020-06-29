@@ -11,6 +11,7 @@ import { NoteTabCreateRequestModel } from '../model/note-tab-create-request-mode
 import { NoteCollectionComponent } from '../note-collection/note-collection.component';
 import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';
 import { MatDialog } from '@angular/material/dialog';
+import { SortablejsOptions } from 'angular-sortablejs';
 
 @Component({
   selector: 'app-note',
@@ -290,13 +291,14 @@ export class NoteComponent implements OnInit, AfterViewInit {
   }
 
 
-  sortableOption = {
+  sortableOption:SortablejsOptions = {
     onUpdate: (event: any) => {
       this.noteCollection.forEach((note: NoteTabUiModel, index: number) => {
         note.order_index = (index + 1);
         note.modifiedOrder = true;
       })
-    }
+    },
+    handle:".sort-handle"
   }
 
   showSetNewPasswordDialog() {

@@ -14,6 +14,7 @@
     <li class="list-group-item list-group-item-action cursor-pointer"
     [class.selected]="note==selectedNote"
     *ngFor="let note of filteredNoteCollection" (click)="updateSelectedNote(note)">
+      <i class="fa fas fa-arrows sort-handle mr-2"></i>
       {{note.title}}
 
       <span class="float-right ">
