@@ -234,7 +234,6 @@ export class NoteComponent implements OnInit, AfterViewInit {
     }
   }
   showDeleteConfirmationTab(tab: NoteTabUiModel){
-    //TODO::Check if Authorized otherwise show error
     if (this.noteCollectionComponent.isNoteLocked() &&
     this.noteCollectionComponent.isNoteAuthorized()==false){
       this.toastService.showToast('Unlock note and try again.');

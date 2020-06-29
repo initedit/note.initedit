@@ -564,6 +564,12 @@ export class NoteCollectionComponent implements OnInit {
   }
 
   showConfirmDeleteBox(){
+
+    if (this.isNoteLocked() && this.isNoteAuthorized()==false){
+      this.toastService.showToast('Unlock note and try again.');
+      return;
+    }
+
     const dialogRef = this.dialog.open(ConfirmDialogComponentComponent,{
       data:{
         Title:"Delete?",
