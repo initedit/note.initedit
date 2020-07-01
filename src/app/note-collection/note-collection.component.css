@@ -1,5 +1,14 @@
+.scrollbar-containier{
+    position: relative;
+    height: 2.3rem;
+    background-color: #111;
+}
 .tabs-scrollbar-container{
   overflow-x: auto;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
 }
 .tab-scrollerbar{
   display: table;

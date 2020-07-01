@@ -143,7 +143,7 @@ Home Page Style
         padding: 0.4em;
         background-color: #111;
         color: #EEE;
-        height: calc(100vh - 4.6em);
+        height: calc(100vh - 5.1em);
         display: block;
 }
 .writeable-content:read-only{
