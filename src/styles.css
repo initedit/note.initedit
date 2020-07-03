@@ -231,17 +231,8 @@ Mobile
 */
 
 @media (max-width: 767px) {
-        .brand{
-                font-size: 6em;
-        }
-        .input-note{
-                width: 95%;
-                left: 2.5%;
-        }
         .menu-left{
                 width:100vw;
-        }
-        .menu-left{
                 left: -100vw;
         }
 
