@@ -1,19 +1,18 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { HttpClientModule } from '@angular/common/http';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { NoteCreateRequestModel } from './model/note-create-request-model';
 import { NoteTabCreateRequestModel } from './model/note-tab-create-request-model';
 import { NoteResponseModel, SingleNoteResponseModel } from './model/note-response-model';
 import Utils from './Util';
 import { NoteItemsTemplate } from './model/note-items-template';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NoteService {
-  // private baseUrl = 'https://api.note.initedit.com/public/api/';
-  private baseUrl = 'http://localhost:8000/api/';
+  private baseUrl = environment.apiEndpoint;
 
   constructor(private http: HttpClient) { }
 
