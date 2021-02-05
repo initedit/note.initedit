@@ -470,7 +470,7 @@ export class NoteCollectionComponent implements OnInit {
         tabs.push(mTab);
       });
 
-      this.noteService.createNewNoteTabs(this.slug, tabs)
+      this.noteService.createNewNoteTabs(this.slug, {items: tabs})
         .subscribe((response: any) => {
           if (response.code == 1) {
             this.toastService.showToast('Created tabs')

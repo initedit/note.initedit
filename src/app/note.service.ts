@@ -6,12 +6,14 @@ import { NoteCreateRequestModel } from './model/note-create-request-model';
 import { NoteTabCreateRequestModel } from './model/note-tab-create-request-model';
 import { NoteResponseModel } from './model/note-response-model';
 import Utils from './Util';
+import { NoteItemsTemplate } from './model/note-items-template';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NoteService {
-  private baseUrl = 'https://api.note.initedit.com/public/api/';
+  // private baseUrl = 'https://api.note.initedit.com/public/api/';
+  private baseUrl = 'http://localhost:8000/api/';
 
   constructor(private http: HttpClient) { }
 
@@ -90,7 +92,7 @@ export class NoteService {
     return this.http.post(this.getAPIUrl('note/' + slug + '/tab'), request, httpOptions)
   }
 
-  createNewNoteTabs(slug: string, request: NoteTabCreateRequestModel[]): any {
+  createNewNoteTabs(slug: string, request: NoteItemsTemplate<NoteTabCreateRequestModel>): any {
     let token = this.getApiToken(slug);
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
