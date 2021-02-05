@@ -4,7 +4,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { NoteCreateRequestModel } from './model/note-create-request-model';
 import { NoteTabCreateRequestModel } from './model/note-tab-create-request-model';
-import { NoteResponseModel } from './model/note-response-model';
+import { NoteResponseModel, SingleNoteResponseModel } from './model/note-response-model';
 import Utils from './Util';
 import { NoteItemsTemplate } from './model/note-items-template';
 
@@ -52,7 +52,7 @@ export class NoteService {
     return this.http.get<NoteResponseModel>(this.getAPIUrl('note/' + slug), httpOptions)
   }
 
-  fetchNoteTab(slug: string, tabid: any): Observable<NoteResponseModel> {
+  fetchNoteTab(slug: string, tabid: any): Observable<SingleNoteResponseModel> {
     let token = this.getApiToken(slug);
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
@@ -60,7 +60,7 @@ export class NoteService {
     if (token) {
       httpOptions.headers = httpOptions.headers.append('token', token);
     }
-    return this.http.get<NoteResponseModel>(this.getAPIUrl('note/' + slug + '/tab/' + tabid), httpOptions)
+    return this.http.get<SingleNoteResponseModel>(this.getAPIUrl('note/' + slug + '/tab/' + tabid), httpOptions)
   }
   fetchNoteTabs(slug: string, ids: any[]): Observable<NoteResponseModel> {
     let token = this.getApiToken(slug);
@@ -122,7 +122,7 @@ export class NoteService {
     return this.http.patch(this.getAPIUrl('note/' + slug + '/tab/' + request.id), request, httpOptions)
   }
 
-  updateNoteTabs(slug: string, request: NoteTabCreateRequestModel[]): any {
+  updateNoteTabs(slug: string, request: NoteItemsTemplate<NoteTabCreateRequestModel>): any {
     let token = this.getApiToken(slug);
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
