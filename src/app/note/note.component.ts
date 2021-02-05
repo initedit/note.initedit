@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener, AfterViewInit, OnDestroy } from '@angular/core';
 import { NoteService } from '../note.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NoteCreateRequestModel } from '../model/note-create-request-model';
@@ -18,7 +18,7 @@ import { SortablejsOptions } from 'angular-sortablejs';
   templateUrl: './note.component.html',
   styleUrls: ['./note.component.css']
 })
-export class NoteComponent implements OnInit, AfterViewInit {
+export class NoteComponent implements OnInit, AfterViewInit, OnDestroy {
   response: NoteResponseModel;
   noteCollection: NoteTabUiModel[];
   filteredNoteCollection: NoteTabUiModel[];
@@ -56,8 +56,19 @@ export class NoteComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     this.refreshNoteData();
   }
-  ngAfterViewInit() {
 
+  showLeaveMessage(e) {
+    if (this.noteCollectionComponent.hasUnsavedNotes()) {
+      var confirmationMessage = "\o/";
+      e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
+      return confirmationMessage;              // Gecko, WebKit, Chrome <34
+    }
+  }
+  ngOnDestroy() {
+    window.removeEventListener("beforeunload", this.showLeaveMessage.bind(this));
+  }
+  ngAfterViewInit() {
+    window.addEventListener("beforeunload", this.showLeaveMessage.bind(this));
   }
 
   @HostListener('document:keydown', ['$event'])

@@ -364,6 +364,42 @@ export class NoteCollectionComponent implements OnInit {
       tab.modifiedOrder = true;
     }
   }
+  hasUnsavedNotes() {
+
+    const modifiedTab: NoteTabUiModel[] = [];
+    const newTabs: NoteTabUiModel[] = [];
+
+    for (let i = 0; i < this.noteCollection.length; i++) {
+      const note = this.noteCollection[i];
+      if (this.slug != note.slug) {
+        return;
+      }
+
+      if (!note.id) {
+        newTabs.push(note);
+      } else {
+        let updatedNote = new NoteTabUiModel();
+        updatedNote = Object.assign({}, note);
+        if (!updatedNote.modifiedTitle) {
+          updatedNote.title = null;
+        }
+        if (!updatedNote.modifiedContent) {
+          updatedNote.content = null;
+        }
+        if (!updatedNote.modifiedVisibility) {
+          updatedNote.visibility = null;
+        }
+        if (updatedNote.modifiedContent || updatedNote.modifiedTitle || updatedNote.modifiedOrder || updatedNote.modifiedVisibility) {
+          modifiedTab.push(updatedNote);
+        }
+      }
+    }
+
+    if (modifiedTab.length + newTabs.length === 0) {
+      return false;
+    }
+    return true;
+  }
   saveNotes() {
 
     // show password dialog only when note is locked & not yet authorized
