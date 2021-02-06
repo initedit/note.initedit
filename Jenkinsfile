@@ -56,9 +56,6 @@ pipeline
         
         stage('Smoke-test')
         {
-            agent{
-                label 'web1'
-            }
             steps
             {
                 sh '''
