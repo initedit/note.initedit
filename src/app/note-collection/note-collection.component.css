@@ -66,3 +66,6 @@
 .tab.active .fa-close {
   background-color: #666;
 }
+.menu-item .fa{
+  cursor: pointer;
+}

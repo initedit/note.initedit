@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener, AfterViewInit, OnDestroy } from '@angular/core';
 import { NoteService } from '../note.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NoteCreateRequestModel } from '../model/note-create-request-model';
@@ -18,7 +18,7 @@ import { SortablejsOptions } from 'angular-sortablejs';
   templateUrl: './note.component.html',
   styleUrls: ['./note.component.css']
 })
-export class NoteComponent implements OnInit, AfterViewInit {
+export class NoteComponent implements OnInit, AfterViewInit, OnDestroy {
   response: NoteResponseModel;
   noteCollection: NoteTabUiModel[];
   filteredNoteCollection: NoteTabUiModel[];
@@ -37,10 +37,10 @@ export class NoteComponent implements OnInit, AfterViewInit {
   noteCollectionComponent: NoteCollectionComponent
 
   @ViewChild("searchInput")
-  searchInput:ElementRef<HTMLInputElement>
+  searchInput: ElementRef<HTMLInputElement>
 
 
-  constructor(private noteService: NoteService, private router: Router, private toastService: ToastService, private route: ActivatedRoute,public dialog: MatDialog) {
+  constructor(private noteService: NoteService, private router: Router, private toastService: ToastService, private route: ActivatedRoute, public dialog: MatDialog) {
     const fragment: string = route.snapshot.fragment;
     try {
       let i = parseInt(fragment);
@@ -56,8 +56,19 @@ export class NoteComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     this.refreshNoteData();
   }
-  ngAfterViewInit() {
 
+  showLeaveMessage(e) {
+    if (this.noteCollectionComponent.hasUnsavedNotes()) {
+      var confirmationMessage = "\o/";
+      e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
+      return confirmationMessage;              // Gecko, WebKit, Chrome <34
+    }
+  }
+  ngOnDestroy() {
+    window.removeEventListener("beforeunload", this.showLeaveMessage.bind(this));
+  }
+  ngAfterViewInit() {
+    window.addEventListener("beforeunload", this.showLeaveMessage.bind(this));
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -233,22 +244,22 @@ export class NoteComponent implements OnInit, AfterViewInit {
       }
     }
   }
-  showDeleteConfirmationTab(tab: NoteTabUiModel){
+  showDeleteConfirmationTab(tab: NoteTabUiModel) {
     if (this.noteCollectionComponent.isNoteLocked() &&
-    this.noteCollectionComponent.isNoteAuthorized()==false){
+      this.noteCollectionComponent.isNoteAuthorized() == false) {
       this.toastService.showToast('Unlock note and try again.');
       return;
     }
 
-    const dialogRef = this.dialog.open(ConfirmDialogComponentComponent,{
-      data:{
-        Title:"Delete?",
-        Message:"Are you sure you want to delete tab?"
+    const dialogRef = this.dialog.open(ConfirmDialogComponentComponent, {
+      data: {
+        Title: "Delete?",
+        Message: "Are you sure you want to delete tab?"
       }
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if(result){
+      if (result) {
         this.deleteTab(tab)
       }
     });
@@ -262,7 +273,7 @@ export class NoteComponent implements OnInit, AfterViewInit {
           } else {
             this.toastService.showToast('Unable to delete tab');
           }
-        },err=>{
+        }, err => {
           //Handle Authorization Rejection
         });
     } else {
@@ -278,7 +289,7 @@ export class NoteComponent implements OnInit, AfterViewInit {
           } else {
             this.toastService.showToast('Unable to delete note.');
           }
-        },err=>{
+        }, err => {
           //Handle Authorization Rejection
         });
     } else {
@@ -288,21 +299,21 @@ export class NoteComponent implements OnInit, AfterViewInit {
   removeNoteTabFromCollection(tab: NoteTabUiModel) {
     let index = this.noteCollection.indexOf(tab);
     this.noteCollection.splice(index, 1);
-    if (this.noteCollection.filter(n=>n.visibility).length==0){
+    if (this.noteCollection.filter(n => n.visibility).length == 0) {
       this.noteCollectionComponent.addNewNoteTab()
     }
     this.toastService.showToast('Deleted tabs');
   }
 
 
-  sortableOption:SortablejsOptions = {
+  sortableOption: SortablejsOptions = {
     onUpdate: (event: any) => {
       this.noteCollection.forEach((note: NoteTabUiModel, index: number) => {
         note.order_index = (index + 1);
         note.modifiedOrder = true;
       })
     },
-    handle:".sort-handle"
+    handle: ".sort-handle"
   }
 
   showSetNewPasswordDialog() {
@@ -329,10 +340,10 @@ export class NoteComponent implements OnInit, AfterViewInit {
     });
   }
 
-  downloadNoteTab(tabData:NoteTabUiModel) {
+  downloadNoteTab(tabData: NoteTabUiModel) {
 
     const tabBlog = new Blob([tabData.content], {
-        type: 'text/plain'
+      type: 'text/plain'
     });
     const a = document.createElement('a');
     const url = window.URL.createObjectURL(tabBlog);
@@ -340,11 +351,13 @@ export class NoteComponent implements OnInit, AfterViewInit {
     a.download = tabData.title + ".txt";
     a.click();
     window.URL.revokeObjectURL(url);
- }
+  }
 
- updateSelectedNote(note:NoteTabUiModel){
-   this.selectedNote = note;
-  this.noteCollectionComponent.onChangeSelectedNote(note,true)
- }
+  updateSelectedNote(note: NoteTabUiModel) {
+    this.selectedNote = note;
+    this.selectedNote.visibility = 1;
+    this.noteService.updateNoteTab(this.selectedNote.slug, this.selectedNote)
+    this.noteCollectionComponent.onChangeSelectedNote(note, true)
+  }
 
 }

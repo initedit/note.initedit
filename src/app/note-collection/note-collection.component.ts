@@ -44,7 +44,7 @@ export class NoteCollectionComponent implements OnInit {
   tabScrollLeft: number
 
   @ViewChildren('itemRef')
-  tabs:QueryList<ElementRef>
+  tabs: QueryList<ElementRef>
 
   @Input()
   set activeNote(value: NoteTabUiModel) {
@@ -73,11 +73,7 @@ export class NoteCollectionComponent implements OnInit {
       this.noteCollection = this._noteDetails.content;
       this.noteCollection.forEach((tab: NoteTabUiModel) => {
         if (this._noteDetails.info.type == 'Private') {
-          // console.log("Called",tab,tab.title)
-
           tab.title = Utils.noteDecrypt(tab.slug, tab.title);
-          // console.log("Called",tab,tab.title)
-
         }
       });
 
@@ -91,7 +87,7 @@ export class NoteCollectionComponent implements OnInit {
       }
     }
   }
-  constructor(private noteService: NoteService, private toastService: ToastService, @Inject(DOCUMENT) private document: any, private router: Router,public dialog: MatDialog) { }
+  constructor(private noteService: NoteService, private toastService: ToastService, @Inject(DOCUMENT) private document: any, private router: Router, public dialog: MatDialog) { }
 
   ngOnInit() {
     this.selectedNote = new NoteTabUiModel();
@@ -108,8 +104,11 @@ export class NoteCollectionComponent implements OnInit {
 
   updateAddButtonLocation() {
     if (this.itemTitleInputCollection && this.itemTitleInputCollection.length > 0) {
-      const el = this.itemTitleInputCollection.first.nativeElement as HTMLElement;
-      const tabWidth = el.parentElement.clientWidth + 1;// border width
+      const visibleTitleInputCollection = this.itemTitleInputCollection.filter((item) => {
+        return (item.nativeElement as HTMLElement).clientWidth != 0;
+      })
+      const el = visibleTitleInputCollection[0].nativeElement as HTMLElement;
+      const tabWidth = (el ? el.parentElement.clientWidth : 0) + 1;// border width
       const visibleCount = this.noteCollection.filter(n => n.visibility == 1).length;
       const totalWidth = tabWidth * visibleCount;
       const btn = this.btnInputAddEl.nativeElement as HTMLButtonElement;
@@ -211,7 +210,7 @@ export class NoteCollectionComponent implements OnInit {
         .subscribe(
           response => {
             if (response.code == 1) {
-              let content = response.content[0].content;
+              let content = response.content.content;
               if (this._noteDetails.info.type == 'Private') {
                 content = Utils.noteDecrypt(this.selectedNote.slug, content);
               }
@@ -226,27 +225,27 @@ export class NoteCollectionComponent implements OnInit {
     }
   }
 
-  onChangeSelectedNote(note: NoteTabUiModel,scrollToElement:boolean) {
+  onChangeSelectedNote(note: NoteTabUiModel, scrollToElement: boolean) {
     if (this.selectedNote != note) {
       this.selectedNote = note;
       if (this.selectedNote.id) {
         this.fetchNoteTabContent();
       }
-      if (scrollToElement){
+      if (scrollToElement) {
         this.scrollToNoteElement(note)
       }
     }
   }
 
-  scrollToNoteElement(note:NoteTabUiModel){
-      //Scroll To Left Position
-      var position = this.noteCollection.indexOf(note)
-      if (this.tabs.length>0 && this.tabs.toArray()[position]){
-        var el = this.tabs.toArray()[position].nativeElement as HTMLDivElement
-        var div = this.topScrollbar.nativeElement as HTMLDivElement
-        // div.scrollLeft = el.offsetLeft;
-        div.scrollTo({ left: el.offsetLeft, behavior: 'smooth' })
-      }
+  scrollToNoteElement(note: NoteTabUiModel) {
+    //Scroll To Left Position
+    var position = this.noteCollection.indexOf(note)
+    if (this.tabs.length > 0 && this.tabs.toArray()[position]) {
+      var el = this.tabs.toArray()[position].nativeElement as HTMLDivElement
+      var div = this.topScrollbar.nativeElement as HTMLDivElement
+      // div.scrollLeft = el.offsetLeft;
+      div.scrollTo({ left: el.offsetLeft, behavior: 'smooth' })
+    }
   }
 
   hasEditPermission() {
@@ -274,8 +273,7 @@ export class NoteCollectionComponent implements OnInit {
     tab.order_index = this.noteCollection.reduce((oldVal: NoteTabUiModel, newVal: NoteTabUiModel) => oldVal.order_index > newVal.order_index ? oldVal : newVal, dummy).order_index + 1;
 
     this.noteCollection.push(tab);
-    this.onChangeSelectedNote(tab,true);
-    // this.inputContentEl.nativeElement.focus();
+    this.onChangeSelectedNote(tab, true);
 
     setTimeout(() => {
       const element = this.itemTitleInputCollection.last.nativeElement as HTMLInputElement;
@@ -316,13 +314,13 @@ export class NoteCollectionComponent implements OnInit {
         return item.order_index > note.order_index && item.visibility == 1;
       }).shift();
       if (nextTab) {
-        this.onChangeSelectedNote(nextTab,false);
+        this.onChangeSelectedNote(nextTab, false);
       } else {
         let previousTab = this.noteCollection.filter((item: NoteTabUiModel) => {
           return item.order_index < note.order_index && item.visibility == 1;
         }).pop();
         if (previousTab) {
-          this.onChangeSelectedNote(previousTab,false);
+          this.onChangeSelectedNote(previousTab, false);
         }
       }
     }
@@ -365,6 +363,42 @@ export class NoteCollectionComponent implements OnInit {
     } else if (action == 'order') {
       tab.modifiedOrder = true;
     }
+  }
+  hasUnsavedNotes() {
+
+    const modifiedTab: NoteTabUiModel[] = [];
+    const newTabs: NoteTabUiModel[] = [];
+
+    for (let i = 0; i < this.noteCollection.length; i++) {
+      const note = this.noteCollection[i];
+      if (this.slug != note.slug) {
+        return;
+      }
+
+      if (!note.id) {
+        newTabs.push(note);
+      } else {
+        let updatedNote = new NoteTabUiModel();
+        updatedNote = Object.assign({}, note);
+        if (!updatedNote.modifiedTitle) {
+          updatedNote.title = null;
+        }
+        if (!updatedNote.modifiedContent) {
+          updatedNote.content = null;
+        }
+        if (!updatedNote.modifiedVisibility) {
+          updatedNote.visibility = null;
+        }
+        if (updatedNote.modifiedContent || updatedNote.modifiedTitle || updatedNote.modifiedOrder || updatedNote.modifiedVisibility) {
+          modifiedTab.push(updatedNote);
+        }
+      }
+    }
+
+    if (modifiedTab.length + newTabs.length === 0) {
+      return false;
+    }
+    return true;
   }
   saveNotes() {
 
@@ -438,7 +472,7 @@ export class NoteCollectionComponent implements OnInit {
 
 
 
-      this.noteService.updateNoteTabs(this.slug, tabs)
+      this.noteService.updateNoteTabs(this.slug, { items: tabs })
         .subscribe((response: NoteResponseModel) => {
           if (response.code === 1) {
             this.toastService.showToast('Saved');
@@ -470,7 +504,7 @@ export class NoteCollectionComponent implements OnInit {
         tabs.push(mTab);
       });
 
-      this.noteService.createNewNoteTabs(this.slug, tabs)
+      this.noteService.createNewNoteTabs(this.slug, { items: tabs })
         .subscribe((response: any) => {
           if (response.code == 1) {
             this.toastService.showToast('Created tabs')
@@ -478,6 +512,7 @@ export class NoteCollectionComponent implements OnInit {
               const _note = newTabs[i];
               _note.id = response.tabs[i].id;
             }
+            console.log(newTabs);
           }
         });
     }
@@ -543,49 +578,49 @@ export class NoteCollectionComponent implements OnInit {
     this.copyText(this.document.location.href);
     this.toastService.showToast('Copied link');
   }
-  download(){
+  download() {
     this.toParrent.emit('DOWNLOAD_CURRENT_TAB');
   }
 
-  onTabMouseWheel(event:WheelEvent){
+  onTabMouseWheel(event: WheelEvent) {
     event.stopPropagation()
     var div = this.topScrollbar.nativeElement as HTMLDivElement
     var delta = event.deltaY;
 
-    if(delta==undefined){
-      var detail = event.detail==0?event.wheelDelta:event.detail
-      if (detail>0){
+    if (delta == undefined) {
+      var detail = event.detail == 0 ? event.wheelDelta : event.detail
+      if (detail > 0) {
         delta = 30;
-      }else{
+      } else {
         delta = -30;
       }
     }
 
-    div.scrollLeft -= delta*3;
+    div.scrollLeft -= delta * 3;
   }
 
-  showConfirmDeleteBox(){
+  showConfirmDeleteBox() {
 
-    if (this.isNoteLocked() && this.isNoteAuthorized()==false){
+    if (this.isNoteLocked() && this.isNoteAuthorized() == false) {
       this.toastService.showToast('Unlock note and try again.');
       return;
     }
 
-    const dialogRef = this.dialog.open(ConfirmDialogComponentComponent,{
-      data:{
-        Title:"Delete?",
-        Message:"Are you sure you want to delete all notes?"
+    const dialogRef = this.dialog.open(ConfirmDialogComponentComponent, {
+      data: {
+        Title: "Delete?",
+        Message: "Are you sure you want to delete all notes?"
       }
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if(result){
+      if (result) {
         this.deleteNote()
       }
     });
   }
 
-  deleteNote(){
+  deleteNote() {
     this.toParrent.emit("DELETE_NOTE")
   }
 
