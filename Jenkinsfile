@@ -1,10 +1,12 @@
-def git_url = 'https://github.com/ashishmaurya/initedit-note-ui.git'
+def git_url = 'https://github.com/initedit/note.initedit.git'
 def git_branch = 'master'
 
 pipeline
 {
-    options {
-        timeout(time: 10, unit: 'MINUTES') 
+    options{
+        timestamps()
+        timeout(time: 10, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
     }
     agent{
         label 'lp-knode-02'
@@ -45,10 +47,10 @@ pipeline
         {
             steps
             {
-                sh '''
+                sh """
                 cd dist
-                rsync -parv -e "ssh -o StrictHostKeyChecking=no" ./NoteUI/ admin@test.note.initedit.com:/home/admin/web/test.note.initedit.com/public_html/
-                '''
+                rsync -parv -e 'ssh -o StrictHostKeyChecking=no' ./NoteUI/ $note_user@$web1:$test_note_public_html_path
+                """
             }
         }
         
@@ -61,7 +63,7 @@ pipeline
             {
                 sh '''
                 ab -n 10 -c 2 -s 60 https://test.note.initedit.com/
-            '''
+                '''
             }
         }
     }
