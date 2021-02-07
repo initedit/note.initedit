@@ -39,6 +39,7 @@ pipeline
                 sh '''
                 npm install
                 ng build --prod
+                /usr/bin/cp /opt/environment.prod.ts src/environments/
                 '''
             }
         }
