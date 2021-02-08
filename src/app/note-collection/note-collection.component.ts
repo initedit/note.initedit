@@ -5,7 +5,7 @@ import { NoteService } from '../note.service';
 import { ToastService } from '../toast.service';
 import { NoteResponseInfoModel, NoteResponseModel } from '../model/note-response-model';
 import Utils from '../Util';
-import { DOCUMENT } from '@angular/platform-browser';
+import { DOCUMENT } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';
@@ -368,7 +368,9 @@ export class NoteCollectionComponent implements OnInit {
 
     const modifiedTab: NoteTabUiModel[] = [];
     const newTabs: NoteTabUiModel[] = [];
-
+    if(this.noteCollection==null){
+      return;
+    }
     for (let i = 0; i < this.noteCollection.length; i++) {
       const note = this.noteCollection[i];
       if (this.slug != note.slug) {
@@ -396,6 +398,12 @@ export class NoteCollectionComponent implements OnInit {
     }
 
     if (modifiedTab.length + newTabs.length === 0) {
+      return false;
+    }
+    let unchangedNewTabs = newTabs.filter((item) => {
+      return item.title == "Untitled Document" && item.content.length == 0
+    });
+    if (newTabs.length - unchangedNewTabs.length === 0) {
       return false;
     }
     return true;
@@ -588,7 +596,7 @@ export class NoteCollectionComponent implements OnInit {
     var delta = event.deltaY;
 
     if (delta == undefined) {
-      var detail = event.detail == 0 ? event.wheelDelta : event.detail
+      var detail = event.detail == 0 ? (event as any).wheelDelta : event.detail
       if (detail > 0) {
         delta = 30;
       } else {

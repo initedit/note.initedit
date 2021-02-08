@@ -1,7 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import {FormsModule } from '@angular/forms';
-import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
+import { FormsModule } from '@angular/forms';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
@@ -12,19 +12,21 @@ import { HttpClientModule } from '@angular/common/http';
 import { HeaderNavComponent } from './header-nav/header-nav.component';
 import { NoteCollectionComponent } from './note-collection/note-collection.component';
 import { ClickStopPropagationDirective } from './click-stop-propagation.directive';
-import {SortablejsModule} from 'angular-sortablejs';
+// import { SortablejsModule } from 'angular-sortablejs';
 import { ToastComponent } from './toast/toast.component';
 
-import {MatSnackBarModule} from '@angular/material/snack-bar';
-import {MatTooltipModule} from '@angular/material/tooltip';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { SharedModule } from './shared/shared.module';
 import { MatRippleModule } from '@angular/material/core';
+import { CanLeaveUnsavedNoteGuardGuard } from './shared/can-leave-unsaved-note-guard.guard';
+import { SortablejsModule } from 'ngx-sortablejs';
 
 
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
-  { path: ':slug', component: NoteComponent },
+  { path: ':slug', canDeactivate: [CanLeaveUnsavedNoteGuardGuard], component: NoteComponent },
   { path: '**', component: NoteComponent },
 ];
 

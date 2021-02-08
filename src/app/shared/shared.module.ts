@@ -1,18 +1,18 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ConfirmDialogComponentComponent } from './confirm-dialog-component/confirm-dialog-component.component';
-import { MatDialogModule } from '@angular/material/dialog';
-import {  MatFormFieldModule } from '@angular/material/form-field';
-import {  MatButtonModule } from '@angular/material/button';
+import { AuthDialogComponentComponent } from './auth-dialog-component/auth-dialog-component.component';
+import { CreatePasswordDialogComponentComponent } from './create-password-dialog-component/create-password-dialog-component.component';
+import { FormsModule } from '@angular/forms';
+import { MaterialModule } from '../material/material.module';
 
 @NgModule({
   imports: [
     CommonModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatButtonModule,
+    MaterialModule,
+    FormsModule,
   ],
-  declarations: [ConfirmDialogComponentComponent],
+  declarations: [ConfirmDialogComponentComponent, AuthDialogComponentComponent, CreatePasswordDialogComponentComponent],
   exports:[
     ConfirmDialogComponentComponent,
   ],

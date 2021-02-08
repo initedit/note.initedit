@@ -1,68 +1,33 @@
 <div class="main-container" [class.menu-left-visible]="menuLeftVisible">
-<app-header-nav (onAction)="menuEvent($event)"></app-header-nav>
-<app-note-collection [notes]="response" [activeNote]="selectedNote" [slug]="getCurrentNoteSlug()" (onAction)="noteCollectionEvent($event)" ></app-note-collection>
-<app-toast></app-toast>
-<div class="menu-left scroll-bar">
-  <div class="bg-accent-color back-nav" (click)="menuLeftVisible=false">
-    <i class="fa fa-arrow-left pr-2" aria-hidden="true"></i>
-    Close
-  </div>
+  <app-header-nav (onAction)="menuEvent($event)"></app-header-nav>
+  <app-note-collection [notes]="response" [activeNote]="selectedNote" [slug]="getCurrentNoteSlug()"
+    (onAction)="noteCollectionEvent($event)"></app-note-collection>
+  <app-toast></app-toast>
+  <div class="menu-left scroll-bar">
+    <div class="bg-accent-color back-nav" (click)="menuLeftVisible=false">
+      <i class="fa fa-arrow-left pr-2" aria-hidden="true"></i>
+      Close
+    </div>
     <div class="m-2">
-      <input type="search" class="form-control" placeholder="search note" #searchInput (input)="search(searchInput.value)" />
+      <input type="search" class="form-control" placeholder="search note" #searchInput
+        (input)="search(searchInput.value)" />
     </div>
     <ul class="list-group" [sortablejs]="noteCollection" [sortablejsOptions]="sortableOption">
-    <li class="list-group-item list-group-item-action cursor-pointer"
-    [class.selected]="note==selectedNote"
-    *ngFor="let note of filteredNoteCollection" (click)="updateSelectedNote(note)">
-      <i class="fa fas fa-arrows sort-handle mr-2"></i>
-      {{note.title}}
+      <li class="list-group-item list-group-item-action cursor-pointer" [class.selected]="note==selectedNote"
+        *ngFor="let note of filteredNoteCollection" (click)="updateSelectedNote(note)">
+        <i class="fa fas fa-arrows sort-handle mr-2"></i>
+        {{note.title}}
 
-      <span class="float-right ">
-        <span class="badge badge-pill float-right">
-          <i class="fa fa-eye"  matTooltip="Visible" *ngIf="note.visibility==1"></i>
-          <i class="fa fa-eye-slash"   matTooltip="Hidden"*ngIf="note.visibility!=1"></i>
+        <span class="float-right ">
+          <span class="badge badge-pill float-right">
+            <i class="fa fa-eye" matTooltip="Visible" *ngIf="note.visibility==1"></i>
+            <i class="fa fa-eye-slash" matTooltip="Hidden" *ngIf="note.visibility!=1"></i>
+          </span>
+          <span class="badge badge-pill float-right" click-stop-propagation (click)="showDeleteConfirmationTab(note)">
+            <i class="fa fa-trash-o" matTooltip="Delete Tab"></i>
+          </span>
         </span>
-        <span class="badge badge-pill float-right" click-stop-propagation (click)="showDeleteConfirmationTab(note)">
-          <i class="fa fa-trash-o"  matTooltip="Delete Tab"></i>
-        </span>
-      </span>
-    </li>
-  </ul>
-</div>
-<div class="bs-modal" [class.visible]="showAuthModel">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                   <div class="modal-header">
-                      <h5 class="modal-title ">Unlock</h5>
-                      <button type="button" class="close" (click)="showAuthModel=false">
-                          <span aria-hidden="true">&times;</span>
-                      </button>
-                    </div>
-                    <div class="modal-body">
-                      <input type="password" #myPassword class="form-control mb-2" (keyup.enter)="validatePassword(myPassword.value)" placeholder="type your sceret key"/>
-                      <button type="button" class="btn btn-primary w-100" (click)="validatePassword(myPassword.value)">Unlock</button>
-                    </div>
-                  </div>
-                </div>
-</div>
-
-<div class="bs-modal" [class.visible]="showCreatePassword">
-    <div class="modal-dialog">
-      <div class="modal-content">
-       <div class="modal-header">
-          <h5 class="modal-title ">Set Password</h5>
-          <button type="button" class="close" (click)="showCreatePassword=false">
-              <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <input type="password" #myNewPassword (keyup.enter)="setNotePassword(myNewPassword.value,isPrivate.checked)" class="form-control mb-2 input-new-password" placeholder="type your sceret key"/>
-          <label>
-            <input type="checkbox" #isPrivate /> Make note private(Super Secure)
-          </label>
-          <button type="button" class="btn btn-primary w-100" (click)="setNotePassword(myNewPassword.value,isPrivate.checked)">Set Password</button>
-        </div>
-      </div>
-    </div>
-</div>
+      </li>
+    </ul>
+  </div>
 </div>

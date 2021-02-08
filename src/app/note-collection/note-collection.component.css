@@ -4,11 +4,14 @@
     background-color: #111;
 }
 .tabs-scrollbar-container{
-  overflow-x: auto;
+  overflow-x: hidden;
   position: absolute;
   left: 0;
   top: 0;
   width: 100%;
+}
+.tabs-scrollbar-container:hover{
+  overflow-x: auto;
 }
 .tab-scrollerbar{
   display: table;
@@ -19,8 +22,6 @@
 .tab-contaniner{
   position: relative;
   display: table-row;
-
-  /* margin-left: 6em; */
   min-height: 2em;
 }
 
@@ -31,9 +32,9 @@
   background-color: #222;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.15em;
+  padding: 0.25em;
   display: table-cell;
-  height: 2.1em;
+  height: 2.3em;
 }
 .tab-contaniner .tab.active{
   background-color: #666;
@@ -68,4 +69,9 @@
 }
 .menu-item .fa{
   cursor: pointer;
+}
+@media (max-width: 767px) {
+  .tabs-scrollbar-container{
+    overflow-x: auto;
+  }
 }
