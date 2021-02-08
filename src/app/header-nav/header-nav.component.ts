@@ -8,18 +8,18 @@ import { MatRipple, RippleRef } from '@angular/material/core';
 })
 export class HeaderNavComponent implements OnInit {
 
-  @ViewChild(MatRipple)
-  buttonRipple:MatRipple
+  @ViewChild(MatRipple, { static: true })
+  buttonRipple: MatRipple
 
-  showAboutUs:boolean
+  showAboutUs: boolean
 
-  rippleRef:RippleRef
+  rippleRef: RippleRef
 
   constructor() { }
   @Output("onAction")
-  toParrent:EventEmitter<any> = new EventEmitter();
+  toParrent: EventEmitter<any> = new EventEmitter();
 
-  @HostListener('document:keydown.escape',["$event"]) onKeyDown(event:KeyboardEvent) {
+  @HostListener('document:keydown.escape', ["$event"]) onKeyDown(event: KeyboardEvent) {
     console.log("Clicked")
     if (this.showAboutUs) {
       this.onInfoClosed()
@@ -31,25 +31,25 @@ export class HeaderNavComponent implements OnInit {
     this.buttonRipple.color = "#FFF"
     this.buttonRipple.unbounded = true
     this.buttonRipple.radius = 1700;
-    // this.buttonRipple.disabled=true;
+    this.buttonRipple.disabled = true;
 
     this.showAboutUs = false
   }
-  onInfoClicked(event:MouseEvent){
+  onInfoClicked(event: MouseEvent) {
     // this.buttonRipple.disabled=true;
-    this.rippleRef = this.buttonRipple.launch(event.x,event.y, {
-      animation:{
-        exitDuration:400
+    this.rippleRef = this.buttonRipple.launch(event.x, event.y, {
+      animation: {
+        exitDuration: 400
       },
-      persistent:true,
+      persistent: true,
     });
 
-    setTimeout(()=>{
+    setTimeout(() => {
       this.showAboutUs = true
-    },this.rippleRef.config.animation.exitDuration)
+    }, this.rippleRef.config.animation.exitDuration)
   }
-  onInfoClosed(){
-    this.showAboutUs=false;
+  onInfoClosed() {
+    this.showAboutUs = false;
     this.rippleRef.fadeOut()
   }
 }

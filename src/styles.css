@@ -101,7 +101,7 @@ Home Page Style
   position: fixed;
   left: 0;
   z-index: 1;
-  padding: 0.25em;
+  padding: 0.4em;
   transition: visibility 2s;
   visibility: visible;
 
@@ -239,6 +239,10 @@ Home Page Style
   justify-content: center;
 }
 
+.w-100 {
+  width: 100%;
+}
+
 /*
 Mobile
 */
@@ -255,5 +259,23 @@ Mobile
 
   body {
     overflow: auto;
+  }
+
+  .writeable-content {
+    height: calc(100vh - 8em);
+  }
+
+  .sidebar-left {
+    bottom: 0em;
+    right: 0em;
+    left: 0em;
+    background-color: #111;
+    padding: 0.3em;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+  }
+  .sidebar-left .menu-item {
+    flex: 1;
+    text-align: center;
   }
 }

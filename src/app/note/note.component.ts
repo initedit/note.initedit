@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { NoteService } from '../note.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NoteCreateRequestModel } from '../model/note-create-request-model';
@@ -7,31 +7,25 @@ import { NoteResponseModel } from '../model/note-response-model';
 import Utils from '../Util';
 import { ToastService } from '../toast.service';
 import { NoteTabUiModel } from '../model/note-tab-ui-model';
-import { NoteTabCreateRequestModel } from '../model/note-tab-create-request-model';
 import { NoteCollectionComponent } from '../note-collection/note-collection.component';
 import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';
 import { MatDialog } from '@angular/material/dialog';
-import { SortablejsOptions } from 'angular-sortablejs';
-
+import { Observable, of } from 'rxjs';
+import { SortableData } from 'ngx-sortablejs';
+import { AuthDialogComponentComponent } from '../shared/auth-dialog-component/auth-dialog-component.component';
+import { CreatePasswordDialogComponentComponent } from '../shared/create-password-dialog-component/create-password-dialog-component.component';
 @Component({
   selector: 'app-note',
   templateUrl: './note.component.html',
   styleUrls: ['./note.component.css']
 })
-export class NoteComponent implements OnInit, AfterViewInit, OnDestroy {
+export class NoteComponent implements OnInit {
   response: NoteResponseModel;
   noteCollection: NoteTabUiModel[];
   filteredNoteCollection: NoteTabUiModel[];
-  showAuthModel: boolean = false;
   menuLeftVisible: boolean = false;
   selectedNote: NoteTabUiModel;
   selectedNotesTabIndex: number = 0;
-
-  @ViewChild('myNewPassword')
-  inputNewPasswordEL: ElementRef
-
-  @ViewChild('myPassword')
-  inputPasswordEL: ElementRef
 
   @ViewChild(NoteCollectionComponent)
   noteCollectionComponent: NoteCollectionComponent
@@ -57,18 +51,20 @@ export class NoteComponent implements OnInit, AfterViewInit, OnDestroy {
     this.refreshNoteData();
   }
 
-  showLeaveMessage(e) {
+  canDeactivate(): Observable<boolean> | boolean {
+    if (this.noteCollectionComponent.hasUnsavedNotes()) {
+      const result = window.confirm('Changes you made may not be saved.');
+      return of(result);
+    }
+    return true;
+  }
+  @HostListener('window:beforeunload', ['$event'])
+  showLeaveMessage($event: BeforeUnloadEvent) {
     if (this.noteCollectionComponent.hasUnsavedNotes()) {
       var confirmationMessage = "\o/";
-      e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
+      $event.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
       return confirmationMessage;              // Gecko, WebKit, Chrome <34
     }
-  }
-  ngOnDestroy() {
-    window.removeEventListener("beforeunload", this.showLeaveMessage.bind(this));
-  }
-  ngAfterViewInit() {
-    window.addEventListener("beforeunload", this.showLeaveMessage.bind(this));
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -76,8 +72,6 @@ export class NoteComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const keyLetter = e.key.toLowerCase();
     if (keyLetter === 'escape') {
-      this.showAuthModel = false;
-      this.showCreatePassword = false;
       this.menuEvent('CLOSE_MENU_LEFT');
     }
   }
@@ -136,7 +130,6 @@ export class NoteComponent implements OnInit, AfterViewInit, OnDestroy {
         if (response.code == 1) {
           //valid password
           this.noteService.addPassword(slug, encPassword, password);
-          this.showAuthModel = false;
           this.toastService.showToast('Unlocked');
           this.refreshNoteData();
         } else {
@@ -144,10 +137,9 @@ export class NoteComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       })
   }
-  showCreatePassword: boolean;
+
   noteCollectionEvent($event: any) {
     if ($event == 'SET_PASSWORD') {
-      //this.showCreatePassword=true;
       this.showSetNewPasswordDialog();
     } else if ($event == 'UNLOCK') {
       this.showValidatePasswordDialog();
@@ -214,7 +206,6 @@ export class NoteComponent implements OnInit, AfterViewInit, OnDestroy {
       .subscribe((response: NoteResponseModel) => {
         if (response.code == 1) {
           this.noteService.addPassword(slug, encPassword, password);
-          this.showCreatePassword = false;
           this.response.info.type = request.type;
           if (request.type == 'Private') {
             this.noteCollection.forEach((tab: NoteTabUiModel) => {
@@ -305,8 +296,7 @@ export class NoteComponent implements OnInit, AfterViewInit, OnDestroy {
     this.toastService.showToast('Deleted tabs');
   }
 
-
-  sortableOption: SortablejsOptions = {
+  sortableOption: SortableData = {
     onUpdate: (event: any) => {
       this.noteCollection.forEach((note: NoteTabUiModel, index: number) => {
         note.order_index = (index + 1);
@@ -317,16 +307,27 @@ export class NoteComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   showSetNewPasswordDialog() {
-    this.showCreatePassword = true;
-    setTimeout(() => {
-      (this.inputNewPasswordEL.nativeElement as HTMLInputElement).focus();
-    }, 50);
+    let dialogRef = this.dialog.open(CreatePasswordDialogComponentComponent, {
+      data: {},
+      width: "400px",
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result != null) {
+        this.setNotePassword(result.password, result.isPrivate);
+      }
+    })
   }
   showValidatePasswordDialog() {
-    this.showAuthModel = true;
-    setTimeout(() => {
-      (this.inputPasswordEL.nativeElement as HTMLInputElement).focus();
-    }, 50);
+    let dialogRef = this.dialog.open(AuthDialogComponentComponent, {
+      data: {},
+      width: "400px",
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result != null) {
+        this.validatePassword(result.password);
+      }
+    })
+
   }
 
 
