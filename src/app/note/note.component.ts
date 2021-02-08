@@ -60,6 +60,7 @@ export class NoteComponent implements OnInit {
   }
   @HostListener('window:beforeunload', ['$event'])
   showLeaveMessage($event: BeforeUnloadEvent) {
+    console.log("Called before Refresh",this.noteCollectionComponent.hasUnsavedNotes());
     if (this.noteCollectionComponent.hasUnsavedNotes()) {
       var confirmationMessage = "\o/";
       $event.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
@@ -96,7 +97,18 @@ export class NoteComponent implements OnInit {
             this.selectedNote = this.noteCollection[0];
           }
           this.selectedNotesTabIndex = -1;
-        }
+        } else
+          if (this.selectedNote) {
+            const visibleNotes = this.noteCollection.filter(item => item.visibility == 1);
+            let selectedNote = visibleNotes.filter(item => {
+              return item.id == this.selectedNote.id && item.slug == this.selectedNote.slug
+            });
+            if (selectedNote.length > 0) {
+              this.selectedNote = selectedNote.pop();
+            } else if (visibleNotes.length > 0) {
+              this.selectedNote = visibleNotes[0];
+            }
+          }
       },
         (error: HttpErrorResponse) => {
           let objError = error.error;

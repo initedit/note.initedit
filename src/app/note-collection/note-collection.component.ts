@@ -1,5 +1,4 @@
 import { Component, OnInit, Input, ViewChild, ElementRef, Output, EventEmitter, Inject, HostListener, ViewChildren, QueryList } from '@angular/core';
-import { DoCheck, KeyValueDiffers, KeyValueDiffer } from '@angular/core';
 import { NoteTabUiModel } from '../model/note-tab-ui-model';
 import { NoteService } from '../note.service';
 import { ToastService } from '../toast.service';
@@ -396,14 +395,10 @@ export class NoteCollectionComponent implements OnInit {
         }
       }
     }
-
-    if (modifiedTab.length + newTabs.length === 0) {
-      return false;
-    }
     let unchangedNewTabs = newTabs.filter((item) => {
       return item.title == "Untitled Document" && item.content.length == 0
     });
-    if (newTabs.length - unchangedNewTabs.length === 0) {
+    if ( modifiedTab.length==0 &&  (newTabs.length - unchangedNewTabs.length) === 0) {
       return false;
     }
     return true;
