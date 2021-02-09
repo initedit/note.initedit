@@ -23,6 +23,7 @@ export class NoteCollectionComponent implements OnInit {
   noteInfo: NoteResponseInfoModel;
   selectedNote: NoteTabUiModel;
   authorized: boolean;
+  isFetchingNoteContent: boolean = false;
 
   @Output('onAction')
   toParrent: EventEmitter<any> = new EventEmitter();
@@ -220,6 +221,7 @@ export class NoteCollectionComponent implements OnInit {
   fetchNoteTabContent() {
     //Fetch only if tab created otherwise it has no meaning to hit web server
     if (this.selectedNote.id && !this.selectedNote.content) {
+      this.isFetchingNoteContent = true;
       this.noteService.fetchNoteTab(this.selectedNote.slug, this.selectedNote.id)
         .subscribe(
           response => {
@@ -230,6 +232,8 @@ export class NoteCollectionComponent implements OnInit {
               }
               this.selectedNote.content = content;
             }
+          }, error => { }, () => {
+            this.isFetchingNoteContent = false;
           }
         );
     }

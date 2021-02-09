@@ -22,6 +22,7 @@ import { MatRippleModule } from '@angular/material/core';
 import { CanLeaveUnsavedNoteGuardGuard } from './shared/can-leave-unsaved-note-guard.guard';
 import { SortablejsModule } from 'ngx-sortablejs';
 import { DateAgoPipe } from './pipes/date-ago.pipe';
+import { MaterialModule } from './material/material.module';
 
 
 
@@ -49,13 +50,11 @@ const routes: Routes = [
     BrowserModule,
     FormsModule,
     SharedModule,
-    MatRippleModule,
     RouterModule.forRoot(routes),
     HttpClientModule,
     SortablejsModule.forRoot({ animation: 150 }),
     BrowserAnimationsModule,
-    MatSnackBarModule,
-    MatTooltipModule
+    MaterialModule
   ],
   providers: [],
   bootstrap: [AppComponent]
