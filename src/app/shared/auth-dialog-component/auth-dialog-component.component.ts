@@ -21,7 +21,7 @@ export class AuthDialogComponentComponent implements OnInit {
     this.dialogRef.close(null);
   }
   finishedInput() {
-    if (this.data.password.length > 0) {
+    if (this.data && this.data.password && this.data.password.length > 0) {
       this.dialogRef.close(this.data);
     }else{
       this.dialogRef.close(null);

@@ -1,10 +1,12 @@
 <h1 mat-dialog-title>Unlock</h1>
 <div mat-dialog-content>
   <mat-form-field class="w-100">
-    <input matInput [(ngModel)]="data.password" cdkFocusInitial (keyup.enter)="finishedInput()" class="w-100" type="password" placeholder="type your sceret key">
+    <input matInput [(ngModel)]="data.password" cdkFocusInitial (keyup.enter)="finishedInput()" class="w-100"
+      type="password" placeholder="type your sceret key">
   </mat-form-field>
 </div>
 <div mat-dialog-actions class="action-button">
   <button mat-raised-button (click)="onNoClick()">Cancel</button>
-  <button mat-raised-button color="primary" [mat-dialog-close]="data" cdkFocusInitial>Unlock</button>
+  <button mat-raised-button color="primary" [mat-dialog-close]="data"
+    [disabled]="!(data.password && data.password.length>0)">Unlock</button>
 </div>
