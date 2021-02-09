@@ -86,7 +86,7 @@ export class NoteCollectionComponent implements OnInit {
       }
     }
   }
-  constructor(private noteService: NoteService, private toastService: ToastService, @Inject(DOCUMENT) private document: any, private router: Router, public dialog: MatDialog) { }
+  constructor(private noteService: NoteService, private toastService: ToastService, @Inject(DOCUMENT) private document: any, private router: Router, public dialog: MatDialog, private el: ElementRef) { }
 
   ngOnInit() {
     this.selectedNote = new NoteTabUiModel();
@@ -108,17 +108,32 @@ export class NoteCollectionComponent implements OnInit {
       })
       const el = visibleTitleInputCollection[0].nativeElement as HTMLElement;
       const tabWidth = (el ? el.parentElement.clientWidth : 0) + 1;// border width
+      const tabTop = (this.el.nativeElement as HTMLElement).offsetTop;
       const visibleCount = this.noteCollection.filter(n => n.visibility == 1).length;
       const totalWidth = tabWidth * visibleCount;
       const btn = this.btnInputAddEl.nativeElement as HTMLButtonElement;
       const btnWidth = btn.clientWidth;
       const screenWidth = document.body.clientWidth;
+      btn.style.top = tabTop + "px";
       if (totalWidth > screenWidth) {
         btn.style.left = (screenWidth - btnWidth) + "px";
       } else {
         btn.style.left = totalWidth + "px";
       }
     }
+  }
+  getPosition(inputEl) {
+    let offsetLeft = 0;
+    let offsetTop = 0;
+
+    let el = inputEl;
+
+    while (el) {
+      offsetLeft += el.offsetLeft;
+      offsetTop += el.offsetTop;
+      el = el.parentElement;
+    }
+    return { offsetTop: offsetTop, offsetLeft: offsetLeft }
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -367,7 +382,7 @@ export class NoteCollectionComponent implements OnInit {
 
     const modifiedTab: NoteTabUiModel[] = [];
     const newTabs: NoteTabUiModel[] = [];
-    if(this.noteCollection==null){
+    if (this.noteCollection == null) {
       return;
     }
     for (let i = 0; i < this.noteCollection.length; i++) {
@@ -398,7 +413,7 @@ export class NoteCollectionComponent implements OnInit {
     let unchangedNewTabs = newTabs.filter((item) => {
       return item.title == "Untitled Document" && item.content.length == 0
     });
-    if ( modifiedTab.length==0 &&  (newTabs.length - unchangedNewTabs.length) === 0) {
+    if (modifiedTab.length == 0 && (newTabs.length - unchangedNewTabs.length) === 0) {
       return false;
     }
     return true;
