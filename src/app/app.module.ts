@@ -21,6 +21,7 @@ import { SharedModule } from './shared/shared.module';
 import { MatRippleModule } from '@angular/material/core';
 import { CanLeaveUnsavedNoteGuardGuard } from './shared/can-leave-unsaved-note-guard.guard';
 import { SortablejsModule } from 'ngx-sortablejs';
+import { DateAgoPipe } from './pipes/date-ago.pipe';
 
 
 
@@ -41,7 +42,8 @@ const routes: Routes = [
     HeaderNavComponent,
     NoteCollectionComponent,
     ClickStopPropagationDirective,
-    ToastComponent
+    ToastComponent,
+    DateAgoPipe
   ],
   imports: [
     BrowserModule,

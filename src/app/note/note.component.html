@@ -16,8 +16,6 @@
       <li class="list-group-item list-group-item-action cursor-pointer" [class.selected]="note==selectedNote"
         *ngFor="let note of filteredNoteCollection" (click)="updateSelectedNote(note)">
         <i class="fa fas fa-arrows sort-handle mr-2"></i>
-        {{note.title}}
-
         <span class="float-right ">
           <span class="badge badge-pill float-right">
             <i class="fa fa-eye" matTooltip="Visible" *ngIf="note.visibility==1"></i>
@@ -27,6 +25,9 @@
             <i class="fa fa-trash-o" matTooltip="Delete Tab"></i>
           </span>
         </span>
+        {{note.title}} <span class="badge timeAgo" matTooltip="{{ note.createdon * 1000 | date }}">{{ note.createdon | dateAgo}}</span>
+
+
       </li>
     </ul>
   </div>
