@@ -175,7 +175,7 @@ Home Page Style
 }
 
 .main-container.menu-left-visible {
-  left: 18em;
+  left: 0em;
 }
 
 .menu-left-visible .menu-left {
