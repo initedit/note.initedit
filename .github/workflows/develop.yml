@@ -1,0 +1,33 @@
+name: prod
+on:
+  push:
+    branches:
+      - 'develop'
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v1
+    - name: Use Node 12.x
+      uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+    - name: build
+      run: |
+        echo "${{ secrets.ENVIRONMENT_PROD_TS }}" > ./src/environments/environment.prod.ts
+        npm ci
+        npm run build:prod
+        echo  "${{ secrets.HTACCESS }}" > ./dist/NoteUI/.htaccess
+    - name: deploy
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        source: "./dist/NoteUI/*"
+        target: "${{ secrets.DEV_DEPLOY_PATH }}"
+        overwrite: true
+        rm: true
+        strip_components: 2
