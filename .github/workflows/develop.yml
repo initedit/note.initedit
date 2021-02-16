@@ -16,7 +16,7 @@ jobs:
         node-version: '12.x'
     - name: build
       run: |
-        echo "${{ secrets.ENVIRONMENT_PROD_TS }}" > ./src/environments/environment.prod.ts
+        echo "${{ secrets.ENVIRONMENT_DEV_TS }}" > ./src/environments/environment.prod.ts
         npm ci
         npm run build:prod
         echo  "${{ secrets.HTACCESS }}" > ./dist/NoteUI/.htaccess
