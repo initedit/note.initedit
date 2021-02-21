@@ -156,8 +156,15 @@ export class NoteComponent implements OnInit {
     } else if ($event == 'UNLOCK') {
       this.showValidatePasswordDialog();
     } else if ($event == 'LOGOUT') {
+      let hasPendingNotes = this.noteCollectionComponent.hasUnsavedNotes();
+      if(hasPendingNotes){
+        if(confirm("Changes you made will not be saved.\nDo you still want to lock the notes?")==false){
+          return;
+        }
+      }
+
       this.noteService.removePassword(this.getCurrentNoteSlug());
-      if (this.response.info.type == 'Private') {
+      if (this.response.info.type == 'Private' || hasPendingNotes) {
         this.noteCollection = [];
         this.response = null;
         this.refreshNoteData();
