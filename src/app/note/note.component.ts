@@ -60,7 +60,6 @@ export class NoteComponent implements OnInit {
   }
   @HostListener('window:beforeunload', ['$event'])
   showLeaveMessage($event: BeforeUnloadEvent) {
-    console.log("Called before Refresh",this.noteCollectionComponent.hasUnsavedNotes());
     if (this.noteCollectionComponent.hasUnsavedNotes()) {
       var confirmationMessage = "\o/";
       $event.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
@@ -143,6 +142,15 @@ export class NoteComponent implements OnInit {
           //valid password
           this.noteService.addPassword(slug, encPassword, password);
           this.toastService.showToast('Unlocked');
+          const fragment: string = this.route.snapshot.fragment;
+          try {
+            let i = parseInt(fragment);
+            if (i > 0) {
+              this.selectedNotesTabIndex = i;
+            }
+          } catch (ex) {
+
+          }
           this.refreshNoteData();
         } else {
           this.toastService.showToast('Invalid Password')
