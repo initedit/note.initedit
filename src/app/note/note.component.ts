@@ -84,13 +84,15 @@ export class NoteComponent implements OnInit {
         this.noteCollection = response.content;
         if (this.selectedNotesTabIndex >= 0 && this.noteCollection.length >= this.selectedNotesTabIndex) {
           let visibleCount = 0;
-          this.noteCollection.forEach((tab: NoteTabUiModel) => {
+          this.noteCollection.every((tab: NoteTabUiModel) => {
             if (tab.visibility == 1) {
               visibleCount++;
             }
             if (visibleCount == this.selectedNotesTabIndex) {
               this.selectedNote = tab;
+              return false;
             }
+            return true;
           });
           if (!this.selectedNote && this.noteCollection.length > 0) {
             this.selectedNote = this.noteCollection[0];
