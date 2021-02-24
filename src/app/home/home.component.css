@@ -1,7 +1,7 @@
 .home {
   min-width: 100vw;
-  min-height: 100vh;
-  position: relative;
+  min-height: 100%;
+  position: fixed;
   z-index: 1;
   display: flex;
   justify-content: center;

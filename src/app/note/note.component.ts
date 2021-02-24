@@ -60,7 +60,6 @@ export class NoteComponent implements OnInit {
   }
   @HostListener('window:beforeunload', ['$event'])
   showLeaveMessage($event: BeforeUnloadEvent) {
-    console.log("Called before Refresh",this.noteCollectionComponent.hasUnsavedNotes());
     if (this.noteCollectionComponent.hasUnsavedNotes()) {
       var confirmationMessage = "\o/";
       $event.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
@@ -85,13 +84,15 @@ export class NoteComponent implements OnInit {
         this.noteCollection = response.content;
         if (this.selectedNotesTabIndex >= 0 && this.noteCollection.length >= this.selectedNotesTabIndex) {
           let visibleCount = 0;
-          this.noteCollection.forEach((tab: NoteTabUiModel) => {
+          this.noteCollection.every((tab: NoteTabUiModel) => {
             if (tab.visibility == 1) {
               visibleCount++;
             }
             if (visibleCount == this.selectedNotesTabIndex) {
               this.selectedNote = tab;
+              return false;
             }
+            return true;
           });
           if (!this.selectedNote && this.noteCollection.length > 0) {
             this.selectedNote = this.noteCollection[0];
@@ -143,6 +144,15 @@ export class NoteComponent implements OnInit {
           //valid password
           this.noteService.addPassword(slug, encPassword, password);
           this.toastService.showToast('Unlocked');
+          const fragment: string = this.route.snapshot.fragment;
+          try {
+            let i = parseInt(fragment);
+            if (i > 0) {
+              this.selectedNotesTabIndex = i;
+            }
+          } catch (ex) {
+
+          }
           this.refreshNoteData();
         } else {
           this.toastService.showToast('Invalid Password')
@@ -156,8 +166,15 @@ export class NoteComponent implements OnInit {
     } else if ($event == 'UNLOCK') {
       this.showValidatePasswordDialog();
     } else if ($event == 'LOGOUT') {
+      let hasPendingNotes = this.noteCollectionComponent.hasUnsavedNotes();
+      if(hasPendingNotes){
+        if(confirm("Changes you made will not be saved.\nDo you still want to lock the notes?")==false){
+          return;
+        }
+      }
+
       this.noteService.removePassword(this.getCurrentNoteSlug());
-      if (this.response.info.type == 'Private') {
+      if (this.response.info.type == 'Private' || hasPendingNotes) {
         this.noteCollection = [];
         this.response = null;
         this.refreshNoteData();

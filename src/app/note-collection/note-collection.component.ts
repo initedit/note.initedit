@@ -8,7 +8,8 @@ import { DOCUMENT } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';
-
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { debounceTime, switchMap, takeUntil } from 'rxjs/operators';
 @Component({
   selector: 'app-note-collection',
   templateUrl: './note-collection.component.html',
@@ -24,7 +25,7 @@ export class NoteCollectionComponent implements OnInit {
   selectedNote: NoteTabUiModel;
   authorized: boolean;
   isFetchingNoteContent: boolean = false;
-
+  autoSave: BehaviorSubject<any> = new BehaviorSubject(null);
   @Output('onAction')
   toParrent: EventEmitter<any> = new EventEmitter();
 
@@ -87,7 +88,16 @@ export class NoteCollectionComponent implements OnInit {
       }
     }
   }
-  constructor(private noteService: NoteService, private toastService: ToastService, @Inject(DOCUMENT) private document: any, private router: Router, public dialog: MatDialog, private el: ElementRef) { }
+  constructor(private noteService: NoteService, private toastService: ToastService, @Inject(DOCUMENT) private document: any, private router: Router, public dialog: MatDialog, private el: ElementRef) {
+    this.autoSave.pipe(
+      debounceTime(3000),
+    ).subscribe((val) => {
+      if(val==true){
+      this.saveNotes()
+      }
+      console.log("Started Auto Saver",val);
+    })
+  }
 
   ngOnInit() {
     this.selectedNote = new NoteTabUiModel();
@@ -381,6 +391,7 @@ export class NoteCollectionComponent implements OnInit {
     } else if (action == 'order') {
       tab.modifiedOrder = true;
     }
+    this.autoSave.next(true);
   }
   hasUnsavedNotes() {
 
@@ -422,7 +433,7 @@ export class NoteCollectionComponent implements OnInit {
     }
     return true;
   }
-  saveNotes() {
+  saveNotes() : Observable<any>|null {
 
     // show password dialog only when note is locked & not yet authorized
     // do not show dialog when its created newly or Public
