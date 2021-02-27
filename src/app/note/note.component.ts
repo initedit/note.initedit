@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { NoteService } from '../note.service';
 import { Router, ActivatedRoute } from '@angular/router';
-import { NoteCreateRequestModel } from '../model/note-create-request-model';
+import { NoteCreateRequestModel, NoteCreateRequestWithTabsModel } from '../model/note-create-request-model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NoteResponseModel } from '../model/note-response-model';
 import Utils from '../Util';
@@ -51,11 +51,10 @@ export class NoteComponent implements OnInit {
     this.refreshNoteData();
     this.noteService.onPasswordUpdated().subscribe(value => {
       if (value != null) {
-        //TODO:: Note password updated
-        // this.setNotePassword(value, this.response.info.type == "Private" ? true : false);
         this.updateNotePassword(value)
       }
     })
+    console.log(Utils.noteEncrypt("u1","u1"))
   }
 
   canDeactivate(): Observable<boolean> | boolean {
@@ -88,6 +87,7 @@ export class NoteComponent implements OnInit {
     var objResponse = this.noteService.fetchNote(slug)
       .subscribe((response: NoteResponseModel) => {
         this.response = response;
+        this.noteService.setActiveNote(this.response);
         this.noteCollection = response.content;
         if (this.selectedNotesTabIndex >= 0 && this.noteCollection.length >= this.selectedNotesTabIndex) {
           let visibleCount = 0;
@@ -237,38 +237,54 @@ export class NoteComponent implements OnInit {
     }
   }
 
-  public updateNotePassword(password: string) {
+  updateNotePassword(password: string) {
     let slug = this.getCurrentNoteSlug();
     let encPassword = Utils.noteEncrypt(slug, '/' + slug, password);
-    let request = new NoteCreateRequestModel();
+    let request = new NoteCreateRequestWithTabsModel;
     request.name = slug;
     request.password = encPassword;
     request.type = this.response.info.type;
+    request.items = [];
 
     let token = this.noteService.getApiToken(slug);
-
+    console.log(this.response,'Info');
     //if request is private then fetch all tabs content first
     if (request.type == 'Private') {
       let ids = new Array<string>();
       this.response.content.forEach((item: NoteTabUiModel) => {
-        if (item.id && !item.content) {
+        if (item.id) {
           ids.push(item.id);
         }
       });
+
       if (ids.length > 0) {
         this.noteService.fetchNoteTabs(slug, ids)
           .subscribe((response: NoteResponseModel) => {
             if (response.code == 1) {
               let collection = response.content;
-              this.response.content.forEach((item: NoteTabUiModel) => {
+              let tempContent: NoteTabUiModel[] = JSON.parse(JSON.stringify(this.response.content));
+
+              tempContent.forEach((item: NoteTabUiModel) => {
                 if (ids.indexOf(item.id) >= 0) {
                   let encContent = collection.filter((tab: NoteTabUiModel) => {
                     return tab.id == item.id
                   })[0].content;
                   item.content = encContent;
-
                 }
               });
+
+              let encryptedContent: NoteTabUiModel[] = tempContent.map(item => {
+                //First Descrypt Note
+                item.content = Utils.noteDecrypt(item.slug, item.content)
+                // //Encrypt with new password
+                item.content = Utils.noteEncrypt(item.slug, item.content, request.password)
+                item.title = Utils.noteEncrypt(item.slug, item.title, request.password)
+
+                return item;
+              })
+              console.log(encryptedContent);
+              //TODO:: Decrypt/Encrypt Notes Content
+              request.items = encryptedContent;
               this.saveUpdatedNotePassword(slug, request, encPassword, password, token);
             }
           });
@@ -281,23 +297,29 @@ export class NoteComponent implements OnInit {
     }
   }
 
-  private saveUpdatedNotePassword(slug: string, request: NoteCreateRequestModel, encPassword: any, password: string, token: string) {
+  private saveUpdatedNotePassword(slug: string, request: NoteCreateRequestWithTabsModel, encPassword: any, password: string, token: string) {
 
     this.noteService.updateNotePassword(slug, token, request)
       .subscribe((response: NoteResponseModel) => {
         if (response.code == 1) {
           this.noteService.addPassword(slug, encPassword, password);
           this.response.info.type = request.type;
-          if (request.type == 'Private') {
-            this.noteCollection.forEach((tab: NoteTabUiModel) => {
-              tab.modifiedContent = true;
-              tab.modifiedTitle = true;
-            });
-            this.noteCollectionComponent.saveNotes();
-          }
+          // if (request.type == 'Private') {
+          //   this.noteCollection.forEach((tab: NoteTabUiModel) => {
+          //     tab.modifiedContent = true;
+          //     tab.modifiedTitle = true;
+          //   });
+          //   this.noteCollectionComponent.saveNotesReuqest()
+          //   .subscribe(result=>{
+          //     console.log(result)
+          //     this.toastService.showToast("Updated Password")
+          //   });
+          // }
+          this.toastService.showToast("Updated Password")
+
         }
         else {
-          this.toastService.showToast('Unable to create note');
+          this.toastService.showToast('Unable to update note');
         }
       });
   }

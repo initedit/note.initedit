@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { NoteCreateRequestModel } from './model/note-create-request-model';
+import { NoteCreateRequestModel, NoteCreateRequestWithTabsModel } from './model/note-create-request-model';
 import { NoteTabCreateRequestModel } from './model/note-tab-create-request-model';
 import { NoteResponseModel, SingleNoteResponseModel } from './model/note-response-model';
 import Utils from './Util';
@@ -15,9 +15,13 @@ export class NoteService {
   private baseUrl = environment.apiEndpoint;
 
   private rxNotePasswordChanged: BehaviorSubject<any>;
+  private rxNoteGeneralSetting: BehaviorSubject<any>;
+  private rxNoteActive: BehaviorSubject<NoteResponseModel>;
 
   constructor(private http: HttpClient) {
     this.rxNotePasswordChanged = new BehaviorSubject(null);
+    this.rxNoteActive = new BehaviorSubject(null);
+    this.rxNoteGeneralSetting = new BehaviorSubject(this.getGeneralSetting());
   }
 
   addPassword(slug: string, encToken: string, vanilaPass: string): boolean {
@@ -120,7 +124,7 @@ export class NoteService {
     return this.http.patch(this.getAPIUrl('note/' + slug), request, httpOptions)
   }
 
-  updateNotePassword(slug: string, token: string, request: NoteCreateRequestModel): any {
+  updateNotePassword(slug: string, token: string, request: NoteCreateRequestWithTabsModel): any {
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json', 'token': token })
     };
@@ -138,7 +142,7 @@ export class NoteService {
     return this.http.patch(this.getAPIUrl('note/' + slug + '/tab/' + request.id), request, httpOptions)
   }
 
-  updateNoteTabs(slug: string, request: NoteItemsTemplate<NoteTabCreateRequestModel>): any {
+  updateNoteTabs(slug: string, request: NoteItemsTemplate<NoteTabCreateRequestModel>): Observable<any> {
     let token = this.getApiToken(slug);
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
@@ -189,4 +193,35 @@ export class NoteService {
   getApiToken(slug: string) {
     return this.getPassword(slug);
   }
+
+  saveGeneralSetting(val: any) {
+    localStorage.setItem("setting.general", JSON.stringify(val));
+    this.rxNoteGeneralSetting.next(this.getGeneralSetting());
+  }
+
+  getGeneralSetting() {
+    let defaultVal = {
+      autoSave: true,
+      showTitle: false
+    };
+    let obj = {};
+    let currentVal = localStorage.getItem("setting.general");
+    if (currentVal) {
+      obj = JSON.parse(currentVal);
+    }
+    return Object.assign({}, defaultVal, obj);
+  }
+
+  onGeneralSettingUpdate():Observable<any>{
+    return this.rxNoteGeneralSetting.asObservable();
+  }
+
+  setActiveNote(note:NoteResponseModel){
+    this.rxNoteActive.next(note);
+  }
+
+  onActiveNoteChange():Observable<NoteResponseModel>{
+    return this.rxNoteActive.asObservable();
+  }
+
 }

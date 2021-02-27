@@ -8,8 +8,8 @@ import { DOCUMENT } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { debounceTime, switchMap, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, forkJoin, Observable, Subject } from 'rxjs';
+import { debounceTime, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 @Component({
   selector: 'app-note-collection',
   templateUrl: './note-collection.component.html',
@@ -92,10 +92,10 @@ export class NoteCollectionComponent implements OnInit {
     this.autoSave.pipe(
       debounceTime(3000),
     ).subscribe((val) => {
-      if(val==true){
-      this.saveNotes()
+      if (val == true) {
+        this.saveNotes()
       }
-      console.log("Started Auto Saver",val);
+      console.log("Started Auto Saver", val);
     })
   }
 
@@ -433,14 +433,26 @@ export class NoteCollectionComponent implements OnInit {
     }
     return true;
   }
-  saveNotes() : Observable<any>|null {
+
+  saveNotes() {
+    let allObservable = this.saveNotesReuqest();
+    if (allObservable != null) {
+      allObservable.subscribe(results => {
+        //TODO:: Check if code==1
+        this.toastService.showToast("Saved");
+        console.log(results);
+      })
+    }
+  }
+
+  saveNotesReuqest(): Observable<any> | null {
 
     // show password dialog only when note is locked & not yet authorized
     // do not show dialog when its created newly or Public
     if (this.isNoteLocked()) {
       if (!this.isNoteAuthorized()) {
         this.unlockCurrentNote();
-        return;
+        return null;
       }
     }
 
@@ -451,7 +463,7 @@ export class NoteCollectionComponent implements OnInit {
     for (let i = 0; i < this.noteCollection.length; i++) {
       const note = this.noteCollection[i];
       if (this.slug != note.slug) {
-        return;
+        return null;
       }
 
       if (!note.id) {
@@ -476,8 +488,10 @@ export class NoteCollectionComponent implements OnInit {
 
     if (modifiedTab.length + newTabs.length === 0) {
       this.toastService.showToast('Nothing to save.');
+      return null;
     }
-
+    let allObservable: Observable<any>
+    let obsArray: Observable<any>[] = [];
     if (modifiedTab.length > 0) {
 
       // create new element so that if note is private
@@ -502,15 +516,7 @@ export class NoteCollectionComponent implements OnInit {
         }
         tabs.push(mTab);
       });
-
-
-
-      this.noteService.updateNoteTabs(this.slug, { items: tabs })
-        .subscribe((response: NoteResponseModel) => {
-          if (response.code === 1) {
-            this.toastService.showToast('Saved');
-          }
-        });
+      obsArray.push(this.noteService.updateNoteTabs(this.slug, { items: tabs }))
     }
     if (newTabs.length > 0) {
 
@@ -537,25 +543,36 @@ export class NoteCollectionComponent implements OnInit {
         tabs.push(mTab);
       });
 
-      this.noteService.createNewNoteTabs(this.slug, { items: tabs })
-        .subscribe((response: any) => {
+      obsArray.push(this.noteService.createNewNoteTabs(this.slug, { items: tabs }).pipe(
+        tap((response: any) => {
           if (response.code == 1) {
-            this.toastService.showToast('Created tabs')
             for (let i = 0; i < newTabs.length; i++) {
               const _note = newTabs[i];
               _note.id = response.tabs[i].id;
             }
-            console.log(newTabs);
           }
-        });
+        })
+      ))
     }
+
+    allObservable = forkJoin(obsArray).pipe(map(results => {
+      let response: any = {}
+      if (modifiedTab.length > 0) {
+        response.updated = results[0];
+      }
+      if (newTabs.length > 0) {
+        response.new = results[modifiedTab.length == 0 ? 0 : 1];
+      }
+      return response
+    }));
+
     this.noteCollection.forEach(item => {
       item.modifiedContent = false;
       item.modifiedOrder = false;
       item.modifiedTitle = false;
       item.modifiedVisibility = false;
     });
-
+    return allObservable;
   }
   lockCurrentNote() {
     this.toParrent.emit('SET_PASSWORD');

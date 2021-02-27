@@ -2,6 +2,18 @@
   <span>Setting</span>
 </mat-toolbar>
 <mat-tab-group>
+  <mat-tab label="General" [formGroup]="generalForm">
+    <p class='setting-item'>
+      Created On <span> {{ this.activeNote.info.created_on*1000 | date}}</span>
+     </p>
+    <!-- <p class='setting-item'>
+     Auto Save <mat-slide-toggle formControlName='autoSave'></mat-slide-toggle>
+    </p> -->
+    <p class='setting-item'>
+      Show Note Title <mat-slide-toggle formControlName='showTitle'></mat-slide-toggle>
+     </p>
+
+  </mat-tab>
   <mat-tab label="Security">
     <mat-accordion>
       <mat-expansion-panel>
@@ -10,27 +22,22 @@
             Update Password
           </mat-panel-title>
           <mat-panel-description>
-           Change your note password
+            Change your note password
           </mat-panel-description>
         </mat-expansion-panel-header>
         <div [formGroup]="formPassword">
           <mat-form-field class="w-100">
-            <input matInput cdkFocusInitial class="w-100" formControlName="password"
-              type="password" placeholder="type your new secret">
+            <input matInput cdkFocusInitial class="w-100" formControlName="password" type="password"
+              placeholder="type your new secret">
           </mat-form-field>
           <mat-form-field class="w-100">
-            <input matInput cdkFocusInitial class="w-100" formControlName="confirmPassword"
-              type="password" placeholder="type your new secret again">
+            <input matInput cdkFocusInitial class="w-100" formControlName="confirmPassword" type="password"
+              placeholder="type your new secret again">
           </mat-form-field>
-          <button mat-raised-button color="primary" [disabled]="formPassword.invalid" (click)="updatePassword()">Update Password</button>
+          <button mat-raised-button color="primary" [disabled]="formPassword.invalid" (click)="updatePassword()">Update
+            Password</button>
         </div>
       </mat-expansion-panel>
     </mat-accordion>
-  </mat-tab>
-  <mat-tab label="About Note">
-    Hello Info
-  </mat-tab>
-  <mat-tab label="General">
-    Hello Info
   </mat-tab>
 </mat-tab-group>

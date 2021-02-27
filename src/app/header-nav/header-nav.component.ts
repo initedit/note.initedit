@@ -1,7 +1,9 @@
 import { Component, OnInit, Output, EventEmitter, ViewChild, HostListener, Input } from '@angular/core';
 import { MatRipple, RippleRef } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
+import { NoteService } from '../note.service';
 import { SettingComponent } from '../setting/setting.component';
+import Utils from '../Util';
 
 @Component({
   selector: 'app-header-nav',
@@ -17,7 +19,9 @@ export class HeaderNavComponent implements OnInit {
 
   rippleRef: RippleRef
 
-  constructor(public dialog: MatDialog) { }
+  showNoteTitle: boolean = false
+  title: string = ''
+  constructor(public dialog: MatDialog, private noteService: NoteService) { }
   @Output("onAction")
   toParrent: EventEmitter<any> = new EventEmitter();
 
@@ -36,6 +40,14 @@ export class HeaderNavComponent implements OnInit {
     this.buttonRipple.disabled = true;
 
     this.showAboutUs = false
+    this.noteService.onGeneralSettingUpdate().subscribe(val => {
+      this.showNoteTitle = val.showTitle;
+    })
+    this.noteService.onActiveNoteChange().subscribe(note => {
+      if (note) {
+        this.title = note.info.slug
+      }
+    })
   }
   onInfoClicked(event: MouseEvent) {
     // this.buttonRipple.disabled=true;
@@ -55,11 +67,11 @@ export class HeaderNavComponent implements OnInit {
     this.rippleRef.fadeOut()
   }
 
-  onSettingClicked(){
-    this.dialog.open(SettingComponent,{
-      width:"90%",
-      height:"80%",
-      panelClass:'setting-panel',
+  onSettingClicked() {
+    this.dialog.open(SettingComponent, {
+      width: "90%",
+      height: "80%",
+      panelClass: 'setting-panel',
     })
   }
 }

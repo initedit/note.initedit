@@ -19,5 +19,6 @@ export class SingleNoteResponseModel {
 export class NoteResponseInfoModel {
   public created_on: number;
   public type: string;
+  public slug: string;
 
 }

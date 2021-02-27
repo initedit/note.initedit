@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { NoteResponseModel } from '../model/note-response-model';
 import { NoteService } from '../note.service';
 
 @Component({
@@ -9,15 +10,30 @@ import { NoteService } from '../note.service';
 })
 export class SettingComponent implements OnInit {
 
-  constructor(private fb:FormBuilder,private noteService:NoteService) { }
+  constructor(private fb:FormBuilder,public noteService:NoteService) { }
 
-  formPassword:FormGroup
+  formPassword:FormGroup;
+  generalForm:FormGroup;
+  activeNote:NoteResponseModel;
   ngOnInit(): void {
     this.formPassword = this.fb.group({
       "password":["",Validators.required],
       "confirmPassword":["",Validators.required]
     },{
       validator:this.checkIfMatchingPasswords('password','confirmPassword')
+    })
+
+    this.generalForm = this.fb.group({
+      'autoSave':[true],
+      'showTitle':[false]
+    })
+    this.generalForm.patchValue(this.noteService.getGeneralSetting());
+
+    this.generalForm.valueChanges.subscribe(val=>{
+      this.noteService.saveGeneralSetting(val);
+    })
+    this.noteService.onActiveNoteChange().subscribe(note=>{
+      this.activeNote = note;
     })
   }
 

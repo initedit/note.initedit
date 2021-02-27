@@ -1,0 +1,7 @@
+.setting-item{
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  margin-left: 16px;
+  margin-right: 16px;
+}
