@@ -1,5 +1,7 @@
-import { Component, OnInit, Output, EventEmitter, ViewChild, HostListener } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, ViewChild, HostListener, Input } from '@angular/core';
 import { MatRipple, RippleRef } from '@angular/material/core';
+import { MatDialog } from '@angular/material/dialog';
+import { SettingComponent } from '../setting/setting.component';
 
 @Component({
   selector: 'app-header-nav',
@@ -15,7 +17,7 @@ export class HeaderNavComponent implements OnInit {
 
   rippleRef: RippleRef
 
-  constructor() { }
+  constructor(public dialog: MatDialog) { }
   @Output("onAction")
   toParrent: EventEmitter<any> = new EventEmitter();
 
@@ -51,6 +53,14 @@ export class HeaderNavComponent implements OnInit {
   onInfoClosed() {
     this.showAboutUs = false;
     this.rippleRef.fadeOut()
+  }
+
+  onSettingClicked(){
+    this.dialog.open(SettingComponent,{
+      width:"90%",
+      height:"80%",
+      panelClass:'setting-panel',
+    })
   }
 }
 

@@ -1,0 +1,36 @@
+<mat-toolbar mat-dialog-title color='dark'>
+  <span>Setting</span>
+</mat-toolbar>
+<mat-tab-group>
+  <mat-tab label="Security">
+    <mat-accordion>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Update Password
+          </mat-panel-title>
+          <mat-panel-description>
+           Change your note password
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <div [formGroup]="formPassword">
+          <mat-form-field class="w-100">
+            <input matInput cdkFocusInitial class="w-100" formControlName="password"
+              type="password" placeholder="type your new secret">
+          </mat-form-field>
+          <mat-form-field class="w-100">
+            <input matInput cdkFocusInitial class="w-100" formControlName="confirmPassword"
+              type="password" placeholder="type your new secret again">
+          </mat-form-field>
+          <button mat-raised-button color="primary" [disabled]="formPassword.invalid" (click)="updatePassword()">Update Password</button>
+        </div>
+      </mat-expansion-panel>
+    </mat-accordion>
+  </mat-tab>
+  <mat-tab label="About Note">
+    Hello Info
+  </mat-tab>
+  <mat-tab label="General">
+    Hello Info
+  </mat-tab>
+</mat-tab-group>

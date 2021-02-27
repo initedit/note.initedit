@@ -1,6 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AppComponent } from './app.component';
@@ -15,14 +15,12 @@ import { ClickStopPropagationDirective } from './click-stop-propagation.directiv
 // import { SortablejsModule } from 'angular-sortablejs';
 import { ToastComponent } from './toast/toast.component';
 
-import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { SharedModule } from './shared/shared.module';
-import { MatRippleModule } from '@angular/material/core';
 import { CanLeaveUnsavedNoteGuardGuard } from './shared/can-leave-unsaved-note-guard.guard';
 import { SortablejsModule } from 'ngx-sortablejs';
 import { DateAgoPipe } from './pipes/date-ago.pipe';
 import { MaterialModule } from './material/material.module';
+import { SettingComponent } from './setting/setting.component';
 
 
 
@@ -44,11 +42,13 @@ const routes: Routes = [
     NoteCollectionComponent,
     ClickStopPropagationDirective,
     ToastComponent,
-    DateAgoPipe
+    DateAgoPipe,
+    SettingComponent
   ],
   imports: [
     BrowserModule,
     FormsModule,
+    ReactiveFormsModule,
     SharedModule,
     RouterModule.forRoot(routes),
     HttpClientModule,

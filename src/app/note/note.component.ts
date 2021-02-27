@@ -49,6 +49,13 @@ export class NoteComponent implements OnInit {
 
   ngOnInit() {
     this.refreshNoteData();
+    this.noteService.onPasswordUpdated().subscribe(value => {
+      if (value != null) {
+        //TODO:: Note password updated
+        // this.setNotePassword(value, this.response.info.type == "Private" ? true : false);
+        this.updateNotePassword(value)
+      }
+    })
   }
 
   canDeactivate(): Observable<boolean> | boolean {
@@ -167,8 +174,8 @@ export class NoteComponent implements OnInit {
       this.showValidatePasswordDialog();
     } else if ($event == 'LOGOUT') {
       let hasPendingNotes = this.noteCollectionComponent.hasUnsavedNotes();
-      if(hasPendingNotes){
-        if(confirm("Changes you made will not be saved.\nDo you still want to lock the notes?")==false){
+      if (hasPendingNotes) {
+        if (confirm("Changes you made will not be saved.\nDo you still want to lock the notes?") == false) {
           return;
         }
       }
@@ -230,6 +237,71 @@ export class NoteComponent implements OnInit {
     }
   }
 
+  public updateNotePassword(password: string) {
+    let slug = this.getCurrentNoteSlug();
+    let encPassword = Utils.noteEncrypt(slug, '/' + slug, password);
+    let request = new NoteCreateRequestModel();
+    request.name = slug;
+    request.password = encPassword;
+    request.type = this.response.info.type;
+
+    let token = this.noteService.getApiToken(slug);
+
+    //if request is private then fetch all tabs content first
+    if (request.type == 'Private') {
+      let ids = new Array<string>();
+      this.response.content.forEach((item: NoteTabUiModel) => {
+        if (item.id && !item.content) {
+          ids.push(item.id);
+        }
+      });
+      if (ids.length > 0) {
+        this.noteService.fetchNoteTabs(slug, ids)
+          .subscribe((response: NoteResponseModel) => {
+            if (response.code == 1) {
+              let collection = response.content;
+              this.response.content.forEach((item: NoteTabUiModel) => {
+                if (ids.indexOf(item.id) >= 0) {
+                  let encContent = collection.filter((tab: NoteTabUiModel) => {
+                    return tab.id == item.id
+                  })[0].content;
+                  item.content = encContent;
+
+                }
+              });
+              this.saveUpdatedNotePassword(slug, request, encPassword, password, token);
+            }
+          });
+      } else {
+        this.saveUpdatedNotePassword(slug, request, encPassword, password, token);
+      }
+
+    } else {
+      this.saveUpdatedNotePassword(slug, request, encPassword, password, token);
+    }
+  }
+
+  private saveUpdatedNotePassword(slug: string, request: NoteCreateRequestModel, encPassword: any, password: string, token: string) {
+
+    this.noteService.updateNotePassword(slug, token, request)
+      .subscribe((response: NoteResponseModel) => {
+        if (response.code == 1) {
+          this.noteService.addPassword(slug, encPassword, password);
+          this.response.info.type = request.type;
+          if (request.type == 'Private') {
+            this.noteCollection.forEach((tab: NoteTabUiModel) => {
+              tab.modifiedContent = true;
+              tab.modifiedTitle = true;
+            });
+            this.noteCollectionComponent.saveNotes();
+          }
+        }
+        else {
+          this.toastService.showToast('Unable to create note');
+        }
+      });
+  }
+
   private makeNotePrivateAndSave(slug: string, request: NoteCreateRequestModel, encPassword: any, password: string) {
     this.noteService.updateNote(slug, request)
       .subscribe((response: NoteResponseModel) => {
@@ -241,6 +313,7 @@ export class NoteComponent implements OnInit {
               tab.modifiedContent = true;
               tab.modifiedTitle = true;
             });
+            this.noteCollectionComponent.saveNotes();
           }
         }
         else {

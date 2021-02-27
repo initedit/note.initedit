@@ -245,6 +245,9 @@ Home Page Style
 .timeAgo{
   float: right;
 }
+.setting-panel .mat-dialog-container  {
+  padding: 0;
+}
 /*
 Mobile
 */

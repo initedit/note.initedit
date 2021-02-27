@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { NoteCreateRequestModel } from './model/note-create-request-model';
 import { NoteTabCreateRequestModel } from './model/note-tab-create-request-model';
@@ -14,7 +14,11 @@ import { environment } from 'src/environments/environment';
 export class NoteService {
   private baseUrl = environment.apiEndpoint;
 
-  constructor(private http: HttpClient) { }
+  private rxNotePasswordChanged: BehaviorSubject<any>;
+
+  constructor(private http: HttpClient) {
+    this.rxNotePasswordChanged = new BehaviorSubject(null);
+  }
 
   addPassword(slug: string, encToken: string, vanilaPass: string): boolean {
     // TODO : Encrypt password if required
@@ -31,6 +35,12 @@ export class NoteService {
   }
   getPassword(slug: string): string {
     return localStorage.getItem(slug);
+  }
+  onPasswordUpdated(): Observable<string> {
+    return this.rxNotePasswordChanged.asObservable();
+  }
+  updatePassword(password) {
+    this.rxNotePasswordChanged.next(password);
   }
 
 
@@ -104,6 +114,13 @@ export class NoteService {
 
   updateNote(slug: string, request: NoteCreateRequestModel): any {
     let token = request.password;
+    const httpOptions = {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json', 'token': token })
+    };
+    return this.http.patch(this.getAPIUrl('note/' + slug), request, httpOptions)
+  }
+
+  updateNotePassword(slug: string, token: string, request: NoteCreateRequestModel): any {
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json', 'token': token })
     };
