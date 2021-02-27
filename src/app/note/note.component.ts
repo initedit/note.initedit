@@ -282,7 +282,6 @@ export class NoteComponent implements OnInit {
 
                 return item;
               })
-              console.log(encryptedContent);
               //TODO:: Decrypt/Encrypt Notes Content
               request.items = encryptedContent;
               this.saveUpdatedNotePassword(slug, request, encPassword, password, token);
