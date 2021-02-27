@@ -307,17 +307,6 @@ export class NoteComponent implements OnInit {
         if (response.code == 1) {
           this.noteService.addPassword(slug, encPassword, password);
           this.response.info.type = request.type;
-          // if (request.type == 'Private') {
-          //   this.noteCollection.forEach((tab: NoteTabUiModel) => {
-          //     tab.modifiedContent = true;
-          //     tab.modifiedTitle = true;
-          //   });
-          //   this.noteCollectionComponent.saveNotesReuqest()
-          //   .subscribe(result=>{
-          //     console.log(result)
-          //     this.toastService.showToast("Updated Password")
-          //   });
-          // }
           this.toastService.showToast("Updated Password")
 
         }
@@ -451,11 +440,6 @@ export class NoteComponent implements OnInit {
       },
       width: "400px",
     });
-    // dialogRef.afterClosed().subscribe(result => {
-    //   if (result != null) {
-    //     this.validatePassword(result.password);
-    //   }
-    // })
 
   }
 
