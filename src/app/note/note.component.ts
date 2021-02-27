@@ -9,7 +9,7 @@ import { ToastService } from '../toast.service';
 import { NoteTabUiModel } from '../model/note-tab-ui-model';
 import { NoteCollectionComponent } from '../note-collection/note-collection.component';
 import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Observable, of } from 'rxjs';
 import { SortableData } from 'ngx-sortablejs';
 import { AuthDialogComponentComponent } from '../shared/auth-dialog-component/auth-dialog-component.component';
@@ -26,6 +26,7 @@ export class NoteComponent implements OnInit {
   menuLeftVisible: boolean = false;
   selectedNote: NoteTabUiModel;
   selectedNotesTabIndex: number = 0;
+  authModel:any;
 
   @ViewChild(NoteCollectionComponent)
   noteCollectionComponent: NoteCollectionComponent
@@ -148,6 +149,9 @@ export class NoteComponent implements OnInit {
     this.noteService.authenticate(slug, encPassword)
       .subscribe((response: NoteResponseModel) => {
         if (response.code == 1) {
+          if(this.authModel){
+            this.authModel.close();
+          }
           //valid password
           this.noteService.addPassword(slug, encPassword, password);
           this.toastService.showToast('Unlocked');
@@ -441,16 +445,23 @@ export class NoteComponent implements OnInit {
     })
   }
   showValidatePasswordDialog() {
-    let dialogRef = this.dialog.open(AuthDialogComponentComponent, {
-      data: {},
+    this.authModel = this.dialog.open(AuthDialogComponentComponent, {
+      data: {
+        onChange:this.authenticatUserWithModel.bind(this)
+      },
       width: "400px",
     });
-    dialogRef.afterClosed().subscribe(result => {
-      if (result != null) {
-        this.validatePassword(result.password);
-      }
-    })
+    // dialogRef.afterClosed().subscribe(result => {
+    //   if (result != null) {
+    //     this.validatePassword(result.password);
+    //   }
+    // })
 
+  }
+
+  authenticatUserWithModel(pass){
+    console.log(pass);
+    this.validatePassword(pass);
   }
 
 

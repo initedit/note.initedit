@@ -2,6 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 interface DialogData {
   password: string;
+  onChange:any
 }
 
 @Component({
@@ -22,7 +23,8 @@ export class AuthDialogComponentComponent implements OnInit {
   }
   finishedInput() {
     if (this.data && this.data.password && this.data.password.length > 0) {
-      this.dialogRef.close(this.data);
+      // this.dialogRef.close(this.data);
+      this.data.onChange(this.data.password);
     }else{
       this.dialogRef.close(null);
     }

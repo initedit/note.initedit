@@ -7,6 +7,5 @@
 </div>
 <div mat-dialog-actions class="action-button">
   <button mat-raised-button (click)="onNoClick()">Cancel</button>
-  <button mat-raised-button color="primary" [mat-dialog-close]="data"
-    [disabled]="!(data.password && data.password.length>0)">Unlock</button>
+  <button mat-raised-button color="primary" (click)="finishedInput()" [disabled]="!(data.password && data.password.length>0)">Unlock</button>
 </div>
