@@ -1,6 +1,7 @@
 import { Component, OnInit, Output, EventEmitter, ViewChild, HostListener, Input } from '@angular/core';
 import { MatRipple, RippleRef } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
+import { NoteResponseModel } from '../model/note-response-model';
 import { NoteService } from '../note.service';
 import { SettingComponent } from '../setting/setting.component';
 import Utils from '../Util';
@@ -18,6 +19,8 @@ export class HeaderNavComponent implements OnInit {
   showAboutUs: boolean
 
   rippleRef: RippleRef
+
+  activeNote:NoteResponseModel
 
   showNoteTitle: boolean = false
   title: string = ''
@@ -46,6 +49,7 @@ export class HeaderNavComponent implements OnInit {
     this.noteService.onActiveNoteChange().subscribe(note => {
       if (note) {
         this.title = note.info.slug
+        this.activeNote = note;
       }
     })
   }
@@ -72,6 +76,9 @@ export class HeaderNavComponent implements OnInit {
       width: "90%",
       height: "80%",
       panelClass: 'setting-panel',
+      data:{
+        isNoteAuthorized:this.noteService.getPassword(this.activeNote.info.slug)?true:false
+      }
     })
   }
 }

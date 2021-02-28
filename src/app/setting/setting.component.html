@@ -16,7 +16,7 @@
   </mat-tab>
   <mat-tab label="Security">
     <mat-accordion>
-      <mat-expansion-panel>
+      <mat-expansion-panel *ngIf="data.isNoteAuthorized">
         <mat-expansion-panel-header>
           <mat-panel-title>
             Update Password

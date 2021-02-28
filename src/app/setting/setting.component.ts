@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { NoteResponseModel } from '../model/note-response-model';
 import { NoteService } from '../note.service';
 
@@ -10,7 +11,7 @@ import { NoteService } from '../note.service';
 })
 export class SettingComponent implements OnInit {
 
-  constructor(private fb:FormBuilder,public noteService:NoteService) { }
+  constructor(private fb:FormBuilder,public noteService:NoteService,@Inject(MAT_DIALOG_DATA) public data: any) { }
 
   formPassword:FormGroup;
   generalForm:FormGroup;
