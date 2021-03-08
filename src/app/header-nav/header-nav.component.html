@@ -3,7 +3,7 @@
     <div class="col-sm-12 nav-container">
       <i class="fa fa-bars cursor-pointer" (click)="toParrent.emit('TOGGLE_MENU_LEFT')"></i>
       <span class="brand-name cursor-pointer ml-4"  routerLink="/" *ngIf='showNoteTitle==false'>Note.</span>
-      <span class="brand-name cursor-pointer ml-4" *ngIf='showNoteTitle==true'>
+      <span class="brand-name cursor-pointer ml-4" (click)="copyLink()"  *ngIf='showNoteTitle==true'>
         /{{ title }}
       </span>
       <i class="fa fa-info cursor-pointer info-button" matRipple (click)="onInfoClicked($event)"></i>

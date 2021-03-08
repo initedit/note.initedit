@@ -1,5 +1,7 @@
 <mat-toolbar mat-dialog-title color='dark'>
   <span>Setting</span>
+  <span class="example-spacer"></span>
+  <i class="fa fa-close" (click)="closeDialog()"></i>
 </mat-toolbar>
 <mat-tab-group>
   <mat-tab label="General" [formGroup]="generalForm">

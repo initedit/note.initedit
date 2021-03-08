@@ -1,7 +1,18 @@
-.setting-item{
+.setting-item {
   display: flex;
   justify-content: space-between;
   padding: 8px;
   margin-left: 16px;
   margin-right: 16px;
+}
+
+.fa-close {
+  float: left;
+  color: #999;
+  cursor: pointer;
+  padding: 0.5em 1em;
+}
+
+.example-spacer {
+  flex: 1 1 auto;
 }

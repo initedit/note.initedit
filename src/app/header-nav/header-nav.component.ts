@@ -1,9 +1,11 @@
-import { Component, OnInit, Output, EventEmitter, ViewChild, HostListener, Input } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, OnInit, Output, EventEmitter, ViewChild, HostListener, Input, Inject } from '@angular/core';
 import { MatRipple, RippleRef } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
 import { NoteResponseModel } from '../model/note-response-model';
 import { NoteService } from '../note.service';
 import { SettingComponent } from '../setting/setting.component';
+import { ToastService } from '../toast.service';
 import Utils from '../Util';
 
 @Component({
@@ -20,11 +22,11 @@ export class HeaderNavComponent implements OnInit {
 
   rippleRef: RippleRef
 
-  activeNote:NoteResponseModel
+  activeNote: NoteResponseModel
 
   showNoteTitle: boolean = false
   title: string = ''
-  constructor(public dialog: MatDialog, private noteService: NoteService) { }
+  constructor(public dialog: MatDialog, private noteService: NoteService, @Inject(DOCUMENT) private document: any, private toastService: ToastService) { }
   @Output("onAction")
   toParrent: EventEmitter<any> = new EventEmitter();
 
@@ -76,10 +78,28 @@ export class HeaderNavComponent implements OnInit {
       width: "90%",
       height: "80%",
       panelClass: 'setting-panel',
-      data:{
-        isNoteAuthorized:this.noteService.getPassword(this.activeNote.info.slug)?true:false
+      data: {
+        isNoteAuthorized: this.noteService.getPassword(this.activeNote.info.slug) ? true : false
       }
     })
+  }
+  /* To copy any Text */
+  copyText(val: string) {
+    const selBox = document.createElement('textarea');
+    selBox.style.position = 'fixed';
+    selBox.style.left = '0';
+    selBox.style.top = '0';
+    selBox.style.opacity = '0';
+    selBox.value = val;
+    document.body.appendChild(selBox);
+    selBox.focus();
+    selBox.select();
+    document.execCommand('copy');
+    document.body.removeChild(selBox);
+  }
+  copyLink() {
+    this.copyText(this.document.location.href);
+    this.toastService.showToast('Copied link');
   }
 }
 
