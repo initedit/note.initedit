@@ -90,7 +90,7 @@ export class NoteCollectionComponent implements OnInit {
   }
   constructor(private noteService: NoteService, private toastService: ToastService, @Inject(DOCUMENT) private document: any, private router: Router, public dialog: MatDialog, private el: ElementRef) {
     this.autoSave.pipe(
-      debounceTime(3000),
+      debounceTime(5000),
     ).subscribe((val) => {
       if (val == true) {
         this.saveNotes()
