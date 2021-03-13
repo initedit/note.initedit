@@ -26,13 +26,15 @@ export class NoteComponent implements OnInit {
   menuLeftVisible: boolean = false;
   selectedNote: NoteTabUiModel;
   selectedNotesTabIndex: number = 0;
-  authModel:any;
+  authModel: any;
 
   @ViewChild(NoteCollectionComponent)
   noteCollectionComponent: NoteCollectionComponent
 
   @ViewChild("searchInput")
   searchInput: ElementRef<HTMLInputElement>
+
+  isFetchingNoteList: boolean = false
 
 
   constructor(private noteService: NoteService, private router: Router, private toastService: ToastService, private route: ActivatedRoute, public dialog: MatDialog) {
@@ -55,7 +57,6 @@ export class NoteComponent implements OnInit {
         this.updateNotePassword(value)
       }
     })
-    console.log(Utils.noteEncrypt("u1","u1"))
   }
 
   canDeactivate(): Observable<boolean> | boolean {
@@ -85,6 +86,7 @@ export class NoteComponent implements OnInit {
 
   refreshNoteData() {
     const slug = this.getCurrentNoteSlug();
+    this.isFetchingNoteList = true;
     var objResponse = this.noteService.fetchNote(slug)
       .subscribe((response: NoteResponseModel) => {
         this.response = response;
@@ -137,6 +139,8 @@ export class NoteComponent implements OnInit {
             // Authorization Failed
             this.showValidatePasswordDialog();
           }
+        }, () => {
+          this.isFetchingNoteList = false;
         });
   }
 
@@ -149,7 +153,7 @@ export class NoteComponent implements OnInit {
     this.noteService.authenticate(slug, encPassword)
       .subscribe((response: NoteResponseModel) => {
         if (response.code == 1) {
-          if(this.authModel){
+          if (this.authModel) {
             this.authModel.close();
           }
           //valid password
@@ -251,7 +255,7 @@ export class NoteComponent implements OnInit {
     request.items = [];
 
     let token = this.noteService.getApiToken(slug);
-    console.log(this.response,'Info');
+    console.log(this.response, 'Info');
     //if request is private then fetch all tabs content first
     if (request.type == 'Private') {
       let ids = new Array<string>();
@@ -436,14 +440,14 @@ export class NoteComponent implements OnInit {
   showValidatePasswordDialog() {
     this.authModel = this.dialog.open(AuthDialogComponentComponent, {
       data: {
-        onChange:this.authenticatUserWithModel.bind(this)
+        onChange: this.authenticatUserWithModel.bind(this)
       },
       width: "400px",
     });
 
   }
 
-  authenticatUserWithModel(pass){
+  authenticatUserWithModel(pass) {
     console.log(pass);
     this.validatePassword(pass);
   }

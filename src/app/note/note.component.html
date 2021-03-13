@@ -1,5 +1,7 @@
 <div class="main-container" [class.menu-left-visible]="menuLeftVisible">
   <app-header-nav (onAction)="menuEvent($event)"></app-header-nav>
+  <mat-progress-bar mode="indeterminate" *ngIf="isFetchingNoteList"></mat-progress-bar>
+
   <app-note-collection [notes]="response" [activeNote]="selectedNote" [slug]="getCurrentNoteSlug()"
     (onAction)="noteCollectionEvent($event)"></app-note-collection>
   <app-toast></app-toast>
