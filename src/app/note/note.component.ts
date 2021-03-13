@@ -14,6 +14,7 @@ import { Observable, of } from 'rxjs';
 import { SortableData } from 'ngx-sortablejs';
 import { AuthDialogComponentComponent } from '../shared/auth-dialog-component/auth-dialog-component.component';
 import { CreatePasswordDialogComponentComponent } from '../shared/create-password-dialog-component/create-password-dialog-component.component';
+import { finalize } from 'rxjs/operators';
 @Component({
   selector: 'app-note',
   templateUrl: './note.component.html',
@@ -87,7 +88,11 @@ export class NoteComponent implements OnInit {
   refreshNoteData() {
     const slug = this.getCurrentNoteSlug();
     this.isFetchingNoteList = true;
-    var objResponse = this.noteService.fetchNote(slug)
+    var objResponse = this.noteService.fetchNote(slug).pipe(
+      finalize(() => {
+        this.isFetchingNoteList = false;
+      })
+    )
       .subscribe((response: NoteResponseModel) => {
         this.response = response;
         this.noteService.setActiveNote(this.response);
@@ -139,8 +144,6 @@ export class NoteComponent implements OnInit {
             // Authorization Failed
             this.showValidatePasswordDialog();
           }
-        }, () => {
-          this.isFetchingNoteList = false;
         });
   }
 
