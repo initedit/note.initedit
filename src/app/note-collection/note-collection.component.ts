@@ -119,7 +119,7 @@ export class NoteCollectionComponent implements OnInit {
       })
       const el = visibleTitleInputCollection[0].nativeElement as HTMLElement;
       const tabWidth = (el ? el.parentElement.clientWidth : 0) + 1;// border width
-      const tabTop = (this.el.nativeElement as HTMLElement).offsetTop;
+      const tabTop = (this.topScrollbar.nativeElement as HTMLElement).parentElement.offsetTop;
       const visibleCount = this.noteCollection.filter(n => n.visibility == 1).length;
       const totalWidth = tabWidth * visibleCount;
       const btn = this.btnInputAddEl.nativeElement as HTMLButtonElement;
