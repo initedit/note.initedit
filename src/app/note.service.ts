@@ -202,7 +202,8 @@ export class NoteService {
   getGeneralSetting() {
     let defaultVal = {
       autoSave: true,
-      showTitle: false
+      showTitle: false,
+      enableSpellCheck: false,
     };
     let obj = {};
     let currentVal = localStorage.getItem("setting.general");
@@ -212,15 +213,15 @@ export class NoteService {
     return Object.assign({}, defaultVal, obj);
   }
 
-  onGeneralSettingUpdate():Observable<any>{
+  onGeneralSettingUpdate(): Observable<any> {
     return this.rxNoteGeneralSetting.asObservable();
   }
 
-  setActiveNote(note:NoteResponseModel){
+  setActiveNote(note: NoteResponseModel) {
     this.rxNoteActive.next(note);
   }
 
-  onActiveNoteChange():Observable<NoteResponseModel>{
+  onActiveNoteChange(): Observable<NoteResponseModel> {
     return this.rxNoteActive.asObservable();
   }
 

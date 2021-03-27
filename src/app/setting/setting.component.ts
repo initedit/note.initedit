@@ -26,7 +26,8 @@ export class SettingComponent implements OnInit {
 
     this.generalForm = this.fb.group({
       'autoSave': [true],
-      'showTitle': [false]
+      'showTitle': [false],
+      'enableSpellCheck':[false]
     })
     this.generalForm.patchValue(this.noteService.getGeneralSetting());
 

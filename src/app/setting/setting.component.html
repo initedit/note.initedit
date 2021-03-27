@@ -7,13 +7,16 @@
   <mat-tab label="General" [formGroup]="generalForm">
     <p class='setting-item'>
       Created On <span> {{ this.activeNote.info.created_on*1000 | date}}</span>
-     </p>
+    </p>
     <!-- <p class='setting-item'>
      Auto Save <mat-slide-toggle formControlName='autoSave'></mat-slide-toggle>
     </p> -->
     <p class='setting-item'>
       Show Note Title <mat-slide-toggle formControlName='showTitle'></mat-slide-toggle>
-     </p>
+    </p>
+    <p class='setting-item'>
+      Enable Spell Check <mat-slide-toggle formControlName='enableSpellCheck'></mat-slide-toggle>
+    </p>
 
   </mat-tab>
   <mat-tab label="Security">

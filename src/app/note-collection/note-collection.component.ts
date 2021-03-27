@@ -26,6 +26,7 @@ export class NoteCollectionComponent implements OnInit {
   authorized: boolean;
   isFetchingNoteContent: boolean = false;
   autoSave: BehaviorSubject<any> = new BehaviorSubject(null);
+  enableSpellCheck:boolean;
   @Output('onAction')
   toParrent: EventEmitter<any> = new EventEmitter();
 
@@ -101,6 +102,9 @@ export class NoteCollectionComponent implements OnInit {
 
   ngOnInit() {
     this.selectedNote = new NoteTabUiModel();
+    this.noteService.onGeneralSettingUpdate().subscribe(form => {
+      this.enableSpellCheck = form.enableSpellCheck;
+    })
   }
 
   @HostListener('window:resize', ['$event'])
