@@ -2,6 +2,12 @@
 
 Frontend for note.initedit
 
+## Run with docker
+
+```bash
+docker run -d -p 80:80 -e NOTE_API_BACKEND='https://api.note.initedit.com/api/' initedit/note.initedit
+```
+
 ## build docker image
 
 ```bash
@@ -10,8 +16,6 @@ docker build -t note.initedit -e NOTE_API_BACKEND='https://api.note.initedit.com
 #run
 docker run -d -p 80:80 -e NOTE_API_BACKEND='https://api.note.initedit.com/api/' note.initedit
 
-#use pre-built docker image
-docker run -d -p 80:80 -e NOTE_API_BACKEND='https://api.note.initedit.com/api/' initedit/note.initedit
 ```
 
 ## Development server
