@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  apiEndpoint:"http://localhost:8000/api/",
+  apiEndpoint:"replace_with_note_api_backend",
 };
 
 /*
