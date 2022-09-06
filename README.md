@@ -5,7 +5,10 @@ Frontend for note.initedit
 ### Run with docker-compose
 
 ```bash
-NOTE_API_BACKEND=http://192.168.0.114:8000/api/ docker compose up -d
+NOTE_API_BACKEND=http://$IPADDR:8000/api/ docker-compose up -d
+
+#default frontend port = 80
+#default backend port  = 8000
 ```
 
 ## Run with docker
