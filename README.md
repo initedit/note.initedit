@@ -2,6 +2,12 @@
 
 Frontend for note.initedit
 
+### Run with docker-compose
+
+```bash
+NOTE_API_BACKEND=http://192.168.0.114:8000/api/ docker compose up -d
+```
+
 ## Run with docker
 
 ```bash
