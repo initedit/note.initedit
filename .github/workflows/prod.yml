@@ -5,8 +5,8 @@ on:
     types:
       - closed
 jobs:
-  if_merged:
-    if: github.event.pull_request.merged == true
+  # if_merged:
+  #   if: github.event.pull_request.merged == true
   build:
     name: build
     runs-on: ubuntu-latest
