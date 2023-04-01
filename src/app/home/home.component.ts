@@ -13,10 +13,11 @@ export class HomeComponent implements OnInit {
   @ViewChild('inputName') inputEl: ElementRef;
 
   title = 'Note.';
+  cacheNotes = [];
   constructor(private noteService: NoteService, private router: Router) { }
 
   ngOnInit() {
-
+    this.cacheNotes = this.noteService.getNoteCache().notes;
   }
   ngAfterViewInit() {
     setTimeout(() => this.inputEl.nativeElement.focus());

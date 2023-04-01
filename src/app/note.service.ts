@@ -54,8 +54,54 @@ export class NoteService {
     };
     return this.http.post<NoteResponseModel>(this.getAPIUrl('note/' + slug + '/auth'), {}, httpOptions)
   }
+
+  addNoteToCache(slug: string){
+    let noteCache = this.getNoteCache();
+
+    const existingNote = noteCache.notes.find(item=>item.slug===slug);
+    if(existingNote){
+      existingNote.updatedAt = Date.now();
+    }else{
+      const newNote = {
+        slug: slug,
+        addedAt: Date.now(),
+        updatedAt: Date.now()
+      }
+      noteCache.notes.push(newNote);
+    }
+
+    const sortedNotes = noteCache.notes.sort((a,b)=>{
+      return b.updatedAt - a.updatedAt;
+    });
+
+    // Keep Max in Cache
+    const maxInCache = 5;
+    if(sortedNotes.length>maxInCache){
+      for(let i=maxInCache;i<sortedNotes.length;i++){
+       const remove = noteCache.notes.indexOf(sortedNotes[i]);
+       noteCache.notes.splice(remove,1);
+      }
+    }
+
+    localStorage.setItem('cacheNotes', JSON.stringify(noteCache));
+  }
+
+  getNoteCache(){
+    let noteCacheString  = localStorage.getItem('cacheNotes');
+    let noteCache = {
+      notes:[],
+    };
+    if(noteCacheString){
+      noteCache = JSON.parse(noteCacheString);
+    }
+    return noteCache;
+
+  }
+
+
   fetchNote(slug: string): Observable<NoteResponseModel> {
-    let token = this.getApiToken(slug);
+    this.addNoteToCache(slug);
+    let token = this.getApiToken(slug);;
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
     };
