@@ -25,6 +25,7 @@
   <ngx-codemirror #codemirror
   [(ngModel)]="selectedNote.content"
   className="writeable-content scroll-bar"
+
   [disabled]="!(!isNoteLocked() || (isNoteLocked() && isNoteAuthorized()))"
   [options]="{
     lineNumbers: false,

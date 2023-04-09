@@ -127,8 +127,9 @@ export class NoteCollectionComponent implements OnInit {
 
     this.subscriptions.push(interval(500).subscribe(val=>{
       if(this.selectedNote && this.selectedNote.title && this.editorTheme!=='null'){
-        const extension = this.selectedNote.title.toLowerCase().split(".").pop();
-        if(extension){
+        const extensions = this.selectedNote.title.toLowerCase().split(".");
+        if(extensions.length>1){
+          const extension = extensions.pop();
           if(['js','ts','json','yaml', 'yml', 'php','py','c','cpp','go','sh','bash','zsh','md','xml','html','css','docker','htaccess','conf'].includes(extension)){
             this.codeMirror.setOptionIfChanged("theme", this.editorTheme);
             this.codeMirror.setOptionIfChanged("lineNumbers",this.editorEnableLineNumber);
