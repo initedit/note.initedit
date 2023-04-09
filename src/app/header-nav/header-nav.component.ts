@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, OnInit, Output, EventEmitter, ViewChild, HostListener, Input, Inject } from '@angular/core';
 import { MatRipple, RippleRef } from '@angular/material/core';
-import { MatDialog } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { NoteResponseModel } from '../model/note-response-model';
 import { NoteService } from '../note.service';
 import { SettingComponent } from '../setting/setting.component';

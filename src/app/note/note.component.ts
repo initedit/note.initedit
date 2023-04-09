@@ -9,7 +9,7 @@ import { ToastService } from '../toast.service';
 import { NoteTabUiModel } from '../model/note-tab-ui-model';
 import { NoteCollectionComponent } from '../note-collection/note-collection.component';
 import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatLegacyDialog as MatDialog, MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { Observable, of } from 'rxjs';
 import { AuthDialogComponentComponent } from '../shared/auth-dialog-component/auth-dialog-component.component';
 import { CreatePasswordDialogComponentComponent } from '../shared/create-password-dialog-component/create-password-dialog-component.component';
