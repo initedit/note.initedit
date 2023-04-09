@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  apiEndpoint:"replace_with_note_api_backend",
+  apiEndpoint:"https://api.note.initedit.com/api/",
 };
 
 /*

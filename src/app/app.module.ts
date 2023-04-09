@@ -21,8 +21,7 @@ import { SortablejsModule } from 'ngx-sortablejs';
 import { DateAgoPipe } from './pipes/date-ago.pipe';
 import { MaterialModule } from './material/material.module';
 import { SettingComponent } from './setting/setting.component';
-
-
+import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -54,9 +53,11 @@ const routes: Routes = [
     HttpClientModule,
     SortablejsModule.forRoot({ animation: 150 }),
     BrowserAnimationsModule,
-    MaterialModule
+    MaterialModule,
+    CodemirrorModule,
   ],
-  providers: [],
+  providers: [
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

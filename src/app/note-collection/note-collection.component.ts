@@ -8,8 +8,10 @@ import { DOCUMENT } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';
-import { BehaviorSubject, forkJoin, Observable, Subject } from 'rxjs';
-import { debounceTime, map, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { BehaviorSubject, forkJoin, interval, Observable, Subject } from 'rxjs';
+import { debounceTime, map, tap } from 'rxjs/operators';
+import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
+import { Subscription } from 'rxjs/internal/Subscription';
 @Component({
   selector: 'app-note-collection',
   templateUrl: './note-collection.component.html',
@@ -27,6 +29,7 @@ export class NoteCollectionComponent implements OnInit {
   isFetchingNoteContent: boolean = false;
   autoSave: BehaviorSubject<any> = new BehaviorSubject(null);
   enableSpellCheck:boolean;
+  subscriptions: Subscription[] = [];
   @Output('onAction')
   toParrent: EventEmitter<any> = new EventEmitter();
 
@@ -89,6 +92,10 @@ export class NoteCollectionComponent implements OnInit {
       }
     }
   }
+
+  @ViewChild('codemirror')
+  codeMirror: CodemirrorComponent;
+
   constructor(private noteService: NoteService, private toastService: ToastService, @Inject(DOCUMENT) private document: any, private router: Router, public dialog: MatDialog, private el: ElementRef) {
     this.autoSave.pipe(
       debounceTime(5000),
@@ -104,7 +111,30 @@ export class NoteCollectionComponent implements OnInit {
     this.selectedNote = new NoteTabUiModel();
     this.noteService.onGeneralSettingUpdate().subscribe(form => {
       this.enableSpellCheck = form.enableSpellCheck;
-    })
+    });
+  }
+
+  ngAfterViewInit(){
+    this.codeMirror.registerOnChange((val)=>{
+        this.selectedNote.content = val;
+        this.modifiedTab('content', this.selectedNote);
+    });
+
+    this.subscriptions.push(interval(500).subscribe(val=>{
+      if(this.selectedNote && this.selectedNote.title){
+        const extension = this.selectedNote.title.toLowerCase().split(".").pop();
+        if(extension){
+          if(['js','ts','json','yaml', 'yml', 'php','py','c','cpp','go','sh','bash','zsh','md','xml','html','css'].includes(extension)){
+            this.codeMirror.setOptionIfChanged("theme", "material-darker");
+            this.codeMirror.setOptionIfChanged("lineNumbers", true);
+            return;
+          }
+        }
+      }
+      this.codeMirror.setOptionIfChanged("theme", "null");
+      this.codeMirror.setOptionIfChanged("lineNumbers", false);
+
+    }))
   }
 
   @HostListener('window:resize', ['$event'])
@@ -115,6 +145,12 @@ export class NoteCollectionComponent implements OnInit {
   ngDoCheck() {
     this.updateAddButtonLocation();
   }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach(subs=>{
+      subs.unsubscribe();
+    })
+}
 
   updateAddButtonLocation() {
     if (this.itemTitleInputCollection && this.itemTitleInputCollection.length > 0) {
