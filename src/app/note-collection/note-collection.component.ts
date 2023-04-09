@@ -6,7 +6,7 @@ import { NoteResponseInfoModel, NoteResponseModel } from '../model/note-response
 import Utils from '../Util';
 import { DOCUMENT } from '@angular/common';
 import { Router } from '@angular/router';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';
 import { BehaviorSubject, forkJoin, interval, Observable, Subject } from 'rxjs';
 import { debounceTime, map, tap } from 'rxjs/operators';
