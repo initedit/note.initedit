@@ -5,6 +5,10 @@
 @import '~codemirror/theme/material-ocean';
 @import '~codemirror/theme/material-darker';
 @import '~codemirror/theme/night';
+@import '~codemirror/theme/twilight';
+@import '~codemirror/theme/yeti';
+@import '~codemirror/theme/yonce';
+@import '~codemirror/theme/zenburn';
 
 
 body {

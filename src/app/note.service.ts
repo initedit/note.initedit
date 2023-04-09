@@ -250,6 +250,8 @@ export class NoteService {
       autoSave: true,
       showTitle: false,
       enableSpellCheck: false,
+      editorEnableLineNumber: false,
+      editorTheme: 'material-darker'
     };
     let obj = {};
     let currentVal = localStorage.getItem("setting.general");

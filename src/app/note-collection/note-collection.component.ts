@@ -96,6 +96,9 @@ export class NoteCollectionComponent implements OnInit {
   @ViewChild('codemirror')
   codeMirror: CodemirrorComponent;
 
+  editorTheme:string = '';
+  editorEnableLineNumber: boolean = false;
+
   constructor(private noteService: NoteService, private toastService: ToastService, @Inject(DOCUMENT) private document: any, private router: Router, public dialog: MatDialog, private el: ElementRef) {
     this.autoSave.pipe(
       debounceTime(5000),
@@ -111,6 +114,8 @@ export class NoteCollectionComponent implements OnInit {
     this.selectedNote = new NoteTabUiModel();
     this.noteService.onGeneralSettingUpdate().subscribe(form => {
       this.enableSpellCheck = form.enableSpellCheck;
+      this.editorEnableLineNumber = form.editorEnableLineNumber;
+      this.editorTheme = form.editorTheme;
     });
   }
 
@@ -121,12 +126,12 @@ export class NoteCollectionComponent implements OnInit {
     });
 
     this.subscriptions.push(interval(500).subscribe(val=>{
-      if(this.selectedNote && this.selectedNote.title){
+      if(this.selectedNote && this.selectedNote.title && this.editorTheme!=='null'){
         const extension = this.selectedNote.title.toLowerCase().split(".").pop();
         if(extension){
-          if(['js','ts','json','yaml', 'yml', 'php','py','c','cpp','go','sh','bash','zsh','md','xml','html','css'].includes(extension)){
-            this.codeMirror.setOptionIfChanged("theme", "material-darker");
-            this.codeMirror.setOptionIfChanged("lineNumbers", true);
+          if(['js','ts','json','yaml', 'yml', 'php','py','c','cpp','go','sh','bash','zsh','md','xml','html','css','docker','htaccess','conf'].includes(extension)){
+            this.codeMirror.setOptionIfChanged("theme", this.editorTheme);
+            this.codeMirror.setOptionIfChanged("lineNumbers",this.editorEnableLineNumber);
             return;
           }
         }
