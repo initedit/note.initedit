@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { NoteResponseModel } from '../model/note-response-model';
 import { NoteService } from '../note.service';
@@ -11,10 +11,10 @@ import { NoteService } from '../note.service';
 })
 export class SettingComponent implements OnInit {
 
-  constructor(private fb: FormBuilder, public noteService: NoteService, private matDialogRef: MatDialogRef<SettingComponent>, @Inject(MAT_DIALOG_DATA) public data: any) { }
+  constructor(private fb: UntypedFormBuilder, public noteService: NoteService, private matDialogRef: MatDialogRef<SettingComponent>, @Inject(MAT_DIALOG_DATA) public data: any) { }
 
-  formPassword: FormGroup;
-  generalForm: FormGroup;
+  formPassword: UntypedFormGroup;
+  generalForm: UntypedFormGroup;
   activeNote: NoteResponseModel;
   ngOnInit(): void {
     this.formPassword = this.fb.group({
@@ -47,7 +47,7 @@ export class SettingComponent implements OnInit {
   }
 
   checkIfMatchingPasswords(passwordKey: string, passwordConfirmationKey: string) {
-    return (group: FormGroup) => {
+    return (group: UntypedFormGroup) => {
       let passwordInput = group.controls[passwordKey],
         passwordConfirmationInput = group.controls[passwordConfirmationKey];
       if (passwordInput.value !== passwordConfirmationInput.value) {
