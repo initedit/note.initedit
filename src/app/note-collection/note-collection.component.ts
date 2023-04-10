@@ -125,7 +125,7 @@ export class NoteCollectionComponent implements OnInit {
         this.modifiedTab('content', this.selectedNote);
     });
 
-    this.subscriptions.push(interval(500).subscribe(val=>{
+    this.subscriptions.push(interval(100).subscribe(val=>{
       if(this.selectedNote && this.selectedNote.title && this.editorTheme!=='null'){
         const extensions = this.selectedNote.title.toLowerCase().split(".");
         if(extensions.length>1){

@@ -99,6 +99,14 @@ Home Page Style
   background-color: #444;
 }
 
+
+ngx-codemirror.disabled .CodeMirror-cursor{
+  display: none;
+}
+ngx-codemirror.disabled .CodeMirror.cm-s-null{
+  background-color: #444;
+}
+
 .btn-add-tab {
   background-color: #111;
   color: #EEE;
