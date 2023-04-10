@@ -432,6 +432,10 @@ export class NoteComponent implements OnInit {
 
   drop(event: CdkDragDrop<NoteTabUiModel[]>) {
     moveItemInArray(this.filteredNoteCollection, event.previousIndex, event.currentIndex);
+    this.noteCollection.forEach((note: NoteTabUiModel, index: number) => {
+            note.order_index = (index + 1);
+            note.modifiedOrder = true;
+    })
   }
 
   showSetNewPasswordDialog() {
@@ -487,6 +491,7 @@ export class NoteComponent implements OnInit {
   updateSelectedNote(note: NoteTabUiModel) {
     this.selectedNote = note;
     this.selectedNote.visibility = 1;
+    this.selectedNote.modifiedVisibility = true;
     this.noteService.updateNoteTab(this.selectedNote.slug, this.selectedNote)
     this.noteCollectionComponent.onChangeSelectedNote(note, true)
   }

@@ -10,7 +10,7 @@
       (click)="onChangeSelectedNote(note,false)"
       (dblclick)="onDoubleClickTab(note,$event)">
         <span class="unsaved-indicator" [class.d-block]="note.modifiedContent || note.modifiedTitle">*</span>
-        <input type="text" autocapitalize="none" #itemTitleInput (input)="modifiedTab('title',selectedNote)" (keyup.enter)="inputContent.focus()" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [readOnly]="!note.isTitleEnabled">
+        <input type="text" autocapitalize="none" #itemTitleInput (input)="modifiedTab('title',selectedNote)" (keyup.enter)="codemirror.codeMirror.focus();codemirror.codeMirror.setCursor(codemirror.codeMirror.lineCount(),0)" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [readOnly]="!note.isTitleEnabled">
         <i class="fa fa-close"  matTooltip="Close" (click)="hideNoteTab(note)" click-stop-propagation></i>
       </div>
       <button class="btn-add-tab" #btnInputAdd (click)="addNewNoteTab()" matTooltip="add new tab">
