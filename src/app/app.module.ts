@@ -17,12 +17,11 @@ import { ToastComponent } from './toast/toast.component';
 
 import { SharedModule } from './shared/shared.module';
 import { CanLeaveUnsavedNoteGuardGuard } from './shared/can-leave-unsaved-note-guard.guard';
-import { SortablejsModule } from 'ngx-sortablejs';
 import { DateAgoPipe } from './pipes/date-ago.pipe';
 import { MaterialModule } from './material/material.module';
 import { SettingComponent } from './setting/setting.component';
-
-
+import { CodemirrorModule } from '@ctrl/ngx-codemirror';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -52,11 +51,13 @@ const routes: Routes = [
     SharedModule,
     RouterModule.forRoot(routes),
     HttpClientModule,
-    SortablejsModule.forRoot({ animation: 150 }),
     BrowserAnimationsModule,
-    MaterialModule
+    MaterialModule,
+    DragDropModule,
+    CodemirrorModule,
   ],
-  providers: [],
+  providers: [
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

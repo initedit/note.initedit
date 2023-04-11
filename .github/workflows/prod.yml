@@ -13,10 +13,10 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v1
-    - name: Use Node 12.x
+    - name: Use Node 16.x
       uses: actions/setup-node@v1
       with:
-        node-version: '12.x'
+        node-version: '16.x'
     - name: build
       run: |
         echo "${{ secrets.ENVIRONMENT_PROD_TS }}" > ./src/environments/environment.prod.ts

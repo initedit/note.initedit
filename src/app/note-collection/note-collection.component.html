@@ -10,7 +10,7 @@
       (click)="onChangeSelectedNote(note,false)"
       (dblclick)="onDoubleClickTab(note,$event)">
         <span class="unsaved-indicator" [class.d-block]="note.modifiedContent || note.modifiedTitle">*</span>
-        <input type="text" autocapitalize="none" #itemTitleInput (input)="modifiedTab('title',selectedNote)" (keyup.enter)="inputContent.focus()" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [readOnly]="!note.isTitleEnabled">
+        <input type="text" autocapitalize="none" #itemTitleInput (input)="modifiedTab('title',selectedNote)" (keyup.enter)="codemirror.codeMirror.focus();codemirror.codeMirror.setCursor(codemirror.codeMirror.lineCount(),0)" (blur)="onTitleBlur(note)" class="tab-title" [(ngModel)]="note.title" [readOnly]="!note.isTitleEnabled">
         <i class="fa fa-close"  matTooltip="Close" (click)="hideNoteTab(note)" click-stop-propagation></i>
       </div>
       <button class="btn-add-tab" #btnInputAdd (click)="addNewNoteTab()" matTooltip="add new tab">
@@ -22,10 +22,16 @@
 </div>
 <div class="note-content">
   <mat-progress-bar mode="indeterminate" *ngIf="isFetchingNoteContent"></mat-progress-bar>
-  <textarea class="writeable-content scroll-bar"
-  [readOnly]="!(!isNoteLocked() || (isNoteLocked() && isNoteAuthorized()))"
-  (input)="modifiedTab('content',selectedNote)" #inputContent [(ngModel)]="selectedNote.content"
-  [spellcheck]="enableSpellCheck" autocapitalize="none"></textarea>
+  <ngx-codemirror #codemirror
+  [(ngModel)]="selectedNote.content"
+  className="writeable-content scroll-bar"
+  [class.disabled]="!(!isNoteLocked() || (isNoteLocked() && isNoteAuthorized()))"
+  [disabled]="!(!isNoteLocked() || (isNoteLocked() && isNoteAuthorized()))"
+  [options]="{
+    lineNumbers: false,
+    theme: 'null'
+  }"
+></ngx-codemirror>
 </div>
 
 <section class="sidebar-left marker-visible">

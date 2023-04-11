@@ -18,6 +18,19 @@
       Enable Spell Check <mat-slide-toggle formControlName='enableSpellCheck'></mat-slide-toggle>
     </p>
 
+    <p class='setting-item'>
+      Show line number on editor <mat-slide-toggle formControlName='editorEnableLineNumber'></mat-slide-toggle>
+    </p>
+
+    <p class='setting-item'>
+      Editor theme <mat-select formControlName='editorTheme'>
+        <mat-option value="null">Nothing</mat-option>
+        <mat-option value="material">Material</mat-option>
+        <mat-option value="material-darker">Material Darker</mat-option>
+        <mat-option value="material-ocean">Material Ocean</mat-option>
+        <mat-option value="night">Night</mat-option>
+      </mat-select>
+    </p>
   </mat-tab>
   <mat-tab label="Security">
     <mat-accordion>

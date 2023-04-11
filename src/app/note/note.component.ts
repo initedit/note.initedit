@@ -9,12 +9,13 @@ import { ToastService } from '../toast.service';
 import { NoteTabUiModel } from '../model/note-tab-ui-model';
 import { NoteCollectionComponent } from '../note-collection/note-collection.component';
 import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import {MatDialog, MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import { Observable, of } from 'rxjs';
-import { SortableData } from 'ngx-sortablejs';
 import { AuthDialogComponentComponent } from '../shared/auth-dialog-component/auth-dialog-component.component';
 import { CreatePasswordDialogComponentComponent } from '../shared/create-password-dialog-component/create-password-dialog-component.component';
 import { finalize } from 'rxjs/operators';
+import {CdkDragDrop, moveItemInArray, transferArrayItem} from '@angular/cdk/drag-drop';
+
 @Component({
   selector: 'app-note',
   templateUrl: './note.component.html',
@@ -419,14 +420,22 @@ export class NoteComponent implements OnInit {
     this.toastService.showToast('Deleted tabs');
   }
 
-  sortableOption: SortableData = {
-    onUpdate: (event: any) => {
-      this.noteCollection.forEach((note: NoteTabUiModel, index: number) => {
-        note.order_index = (index + 1);
-        note.modifiedOrder = true;
-      })
-    },
-    handle: ".sort-handle"
+  // sortableOption: SortableData = {
+  //   onUpdate: (event: any) => {
+  //     this.noteCollection.forEach((note: NoteTabUiModel, index: number) => {
+  //       note.order_index = (index + 1);
+  //       note.modifiedOrder = true;
+  //     })
+  //   },
+  //   handle: ".sort-handle"
+  // }
+
+  drop(event: CdkDragDrop<NoteTabUiModel[]>) {
+    moveItemInArray(this.filteredNoteCollection, event.previousIndex, event.currentIndex);
+    this.noteCollection.forEach((note: NoteTabUiModel, index: number) => {
+            note.order_index = (index + 1);
+            note.modifiedOrder = true;
+    })
   }
 
   showSetNewPasswordDialog() {
@@ -482,6 +491,7 @@ export class NoteComponent implements OnInit {
   updateSelectedNote(note: NoteTabUiModel) {
     this.selectedNote = note;
     this.selectedNote.visibility = 1;
+    this.selectedNote.modifiedVisibility = true;
     this.noteService.updateNoteTab(this.selectedNote.slug, this.selectedNote)
     this.noteCollectionComponent.onChangeSelectedNote(note, true)
   }

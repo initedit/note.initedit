@@ -6,18 +6,18 @@
     (onAction)="noteCollectionEvent($event)"></app-note-collection>
   <app-toast></app-toast>
   <div class="menu-left scroll-bar">
-    <div class="bg-accent-color back-nav" (click)="menuLeftVisible=false">
+    <div class="back-nav" (click)="menuLeftVisible=false">
       <i class="fa fa-arrow-left pr-2" aria-hidden="true"></i>
-      Close
+      Note's List
     </div>
     <div class="m-2">
       <input type="search" class="form-control" placeholder="search note" #searchInput
         (input)="search(searchInput.value)" />
     </div>
-    <ul class="list-group" [sortablejs]="noteCollection" [sortablejsOptions]="sortableOption">
+    <ul class="list-group" cdkDropList="filteredNoteCollection" (cdkDropListDropped)="drop($event)">
       <li class="list-group-item list-group-item-action cursor-pointer" [class.selected]="note==selectedNote"
-        *ngFor="let note of filteredNoteCollection" (click)="updateSelectedNote(note)">
-        <i class="fa fas fa-arrows sort-handle mr-2"></i>
+        *ngFor="let note of filteredNoteCollection" (click)="updateSelectedNote(note)" cdkDrag>
+        <i class="fa fas fa-arrows sort-handle mr-2" ></i>
         <span class="float-right ">
           <span class="badge badge-pill float-right">
             <i class="fa fa-eye" matTooltip="Visible" *ngIf="note.visibility==1"></i>
