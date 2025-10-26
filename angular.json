@@ -28,6 +28,11 @@
               "node_modules/font-awesome/css/font-awesome.css"
             ],
             "scripts": [],
+            "allowedCommonJsDependencies": [
+              "codemirror",
+              "codemirror/mode/javascript/javascript",
+              "codemirror/mode/markdown/markdown"
+            ],
             "aot": false,
             "vendorChunk": true,
             "extractLicenses": false,
