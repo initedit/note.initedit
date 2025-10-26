@@ -1,10 +1,10 @@
-import { Component, OnInit, Input, ViewChild, ElementRef, Output, EventEmitter, Inject, HostListener, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, ElementRef, Output, EventEmitter, Inject, HostListener, ViewChildren, QueryList, DOCUMENT } from '@angular/core';
 import { NoteTabUiModel } from '../model/note-tab-ui-model';
 import { NoteService } from '../note.service';
 import { ToastService } from '../toast.service';
 import { NoteResponseInfoModel, NoteResponseModel } from '../model/note-response-model';
 import Utils from '../Util';
-import { DOCUMENT } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';

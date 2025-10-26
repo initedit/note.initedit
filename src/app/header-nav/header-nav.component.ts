@@ -1,5 +1,5 @@
-import { DOCUMENT } from '@angular/common';
-import { Component, OnInit, Output, EventEmitter, ViewChild, HostListener, Input, Inject } from '@angular/core';
+
+import { Component, OnInit, Output, EventEmitter, ViewChild, HostListener, Input, Inject, DOCUMENT } from '@angular/core';
 import { MatRipple, RippleRef } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
 import { NoteResponseModel } from '../model/note-response-model';
