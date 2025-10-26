@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, CanDeactivate, UrlTree } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { Observable } from 'rxjs';
 import { NoteComponent } from '../note/note.component';
 
 @Injectable({
   providedIn: 'root'
 })
-export class CanLeaveUnsavedNoteGuardGuard implements CanDeactivate<NoteComponent> {
+export class CanLeaveUnsavedNoteGuardGuard  {
 
 
   canDeactivate(
