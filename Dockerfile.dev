@@ -1,0 +1,4 @@
+FROM node:16.13 as build
+WORKDIR /root
+COPY . .
+RUN npm ci
