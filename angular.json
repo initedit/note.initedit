@@ -64,7 +64,10 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "buildTarget": "NoteUI:build"
+            "buildTarget": "NoteUI:build",
+            "host": "0.0.0.0",
+            "port": 4200,
+            "disableHostCheck": true
           },
           "configurations": {
             "production": {
