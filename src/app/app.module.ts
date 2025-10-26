@@ -29,8 +29,6 @@ const routes: Routes = [
   { path: '**', component: NoteComponent },
 ];
 
-
-
 @NgModule({ declarations: [
         AppComponent,
         HomeComponent,
