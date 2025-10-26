@@ -17,9 +17,10 @@ import { finalize } from 'rxjs/operators';
 import {CdkDragDrop, moveItemInArray, transferArrayItem} from '@angular/cdk/drag-drop';
 
 @Component({
-  selector: 'app-note',
-  templateUrl: './note.component.html',
-  styleUrls: ['./note.component.css']
+    selector: 'app-note',
+    templateUrl: './note.component.html',
+    styleUrls: ['./note.component.css'],
+    standalone: false
 })
 export class NoteComponent implements OnInit {
   response: NoteResponseModel;

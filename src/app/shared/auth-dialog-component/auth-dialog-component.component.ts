@@ -6,9 +6,10 @@ interface DialogData {
 }
 
 @Component({
-  selector: 'app-auth-dialog-component',
-  templateUrl: './auth-dialog-component.component.html',
-  styleUrls: ['./auth-dialog-component.component.css']
+    selector: 'app-auth-dialog-component',
+    templateUrl: './auth-dialog-component.component.html',
+    styleUrls: ['./auth-dialog-component.component.css'],
+    standalone: false
 })
 export class AuthDialogComponentComponent implements OnInit {
 

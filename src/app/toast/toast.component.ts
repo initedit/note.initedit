@@ -2,9 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { ToastService } from '../toast.service';
 import { MatSnackBar, MatSnackBarConfig, MatSnackBarModule } from '@angular/material/snack-bar';
 @Component({
-  selector: 'app-toast',
-  templateUrl: './toast.component.html',
-  styleUrls: ['./toast.component.css']
+    selector: 'app-toast',
+    templateUrl: './toast.component.html',
+    styleUrls: ['./toast.component.css'],
+    standalone: false
 })
 export class ToastComponent implements OnInit {
   messages: Array<string> = new Array();

@@ -5,9 +5,10 @@ import { NoteResponseModel } from '../model/note-response-model';
 import { NoteService } from '../note.service';
 
 @Component({
-  selector: 'app-setting',
-  templateUrl: './setting.component.html',
-  styleUrls: ['./setting.component.css']
+    selector: 'app-setting',
+    templateUrl: './setting.component.html',
+    styleUrls: ['./setting.component.css'],
+    standalone: false
 })
 export class SettingComponent implements OnInit {
 

@@ -13,11 +13,12 @@ import { debounceTime, map, tap } from 'rxjs/operators';
 import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
 import { Subscription } from 'rxjs/internal/Subscription';
 @Component({
-  selector: 'app-note-collection',
-  templateUrl: './note-collection.component.html',
-  styleUrls: [
-    './note-collection.component.css',
-  ]
+    selector: 'app-note-collection',
+    templateUrl: './note-collection.component.html',
+    styleUrls: [
+        './note-collection.component.css',
+    ],
+    standalone: false
 })
 export class NoteCollectionComponent implements OnInit {
 

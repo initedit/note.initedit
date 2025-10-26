@@ -9,9 +9,10 @@ import { ToastService } from '../toast.service';
 import Utils from '../Util';
 
 @Component({
-  selector: 'app-header-nav',
-  templateUrl: './header-nav.component.html',
-  styleUrls: ['./header-nav.component.css']
+    selector: 'app-header-nav',
+    templateUrl: './header-nav.component.html',
+    styleUrls: ['./header-nav.component.css'],
+    standalone: false
 })
 export class HeaderNavComponent implements OnInit {
 
