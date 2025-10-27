@@ -34,8 +34,6 @@ export class NoteCollectionComponent implements OnInit {
   @Output('onAction')
   toParrent: EventEmitter<any> = new EventEmitter();
 
-  @ViewChild('inputContent')
-  inputContentEl: ElementRef;
   isLoaded: boolean = false;
 
   @ViewChildren('itemTitleInput')
@@ -195,7 +193,11 @@ export class NoteCollectionComponent implements OnInit {
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown(e: KeyboardEvent) {
-    const keyLetter = e.key.toLowerCase();
+    console.log(e);
+    let keyLetter = e.key.toLowerCase();
+    if(keyLetter==="dead"){
+      keyLetter = (e as any).code.replace('Key','').toLowerCase();
+    }
     if (e.ctrlKey) {
       if (keyLetter == 's') {
         this.saveNotes();
@@ -231,8 +233,7 @@ export class NoteCollectionComponent implements OnInit {
           el.select();
         }, 50);
       } else if (keyLetter == 'e') {
-        (this.inputContentEl.nativeElement as HTMLTextAreaElement).focus();
-        e.preventDefault();
+        this.codeMirror.codeMirror.focus();
       } else if (keyLetter == 'n') {
         this.addNewNoteTab();
       } else if (keyLetter == 'h') {
