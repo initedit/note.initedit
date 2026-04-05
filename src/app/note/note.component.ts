@@ -159,7 +159,9 @@ export class NoteComponent implements OnInit, OnDestroy {
         this.menuEvent('TOGGLE_MENU_LEFT');
         return;
       case 'DOWNLOAD_CURRENT_TAB':
-        if (this.selectedNote) {
+        if (this.noteCollectionComponent?.selectedNote) {
+          this.downloadNoteTab(this.noteCollectionComponent.selectedNote);
+        } else if (this.selectedNote) {
           this.downloadNoteTab(this.selectedNote);
         }
         return;
