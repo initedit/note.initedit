@@ -521,16 +521,17 @@ export class NoteCollectionComponent implements OnInit, AfterViewInit, OnDestroy
     this.toParrent.emit('DOWNLOAD_CURRENT_TAB');
   }
 
-  onTabMouseWheel(event: WheelEvent & { detail?: number; wheelDelta?: number }): void {
+  onTabMouseWheel(event: Event): void {
     event.stopPropagation();
     const scrollContainer = this.topScrollbar?.nativeElement;
     if (!scrollContainer) {
       return;
     }
 
-    let delta = event.deltaY;
+    const wheelEvent = event as WheelEvent & { detail?: number; wheelDelta?: number };
+    let delta = wheelEvent.deltaY;
     if (delta === undefined) {
-      const detail = event.detail === 0 ? event.wheelDelta : event.detail;
+      const detail = wheelEvent.detail === 0 ? wheelEvent.wheelDelta : wheelEvent.detail;
       delta = detail && detail > 0 ? 30 : -30;
     }
 

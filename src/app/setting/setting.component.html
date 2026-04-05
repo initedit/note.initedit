@@ -6,7 +6,7 @@
 <mat-tab-group>
   <mat-tab label="General" [formGroup]="generalForm">
     <p class='setting-item'>
-      Created On <span> {{ this.activeNote.info.created_on*1000 | date}}</span>
+      Created On <span> {{ activeNote?.info?.created_on ? (activeNote.info.created_on * 1000 | date) : '-' }}</span>
     </p>
     <!-- <p class='setting-item'>
      Auto Save <mat-slide-toggle formControlName='autoSave'></mat-slide-toggle>

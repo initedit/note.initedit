@@ -7,6 +7,10 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { NoteGeneralSetting } from '../model/note-general-setting.model';
 
+interface SettingDialogData {
+  isNoteAuthorized: boolean;
+}
+
 @Component({
     selector: 'app-setting',
     templateUrl: './setting.component.html',
@@ -16,14 +20,14 @@ import { NoteGeneralSetting } from '../model/note-general-setting.model';
 export class SettingComponent implements OnInit, OnDestroy {
   formPassword: FormGroup;
   generalForm: FormGroup;
-  activeNote: NoteResponseModel;
+  activeNote: NoteResponseModel | null = null;
   private readonly destroy$ = new Subject<void>();
 
   constructor(
     private fb: FormBuilder,
     public noteService: NoteService,
     private matDialogRef: MatDialogRef<SettingComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: unknown
+    @Inject(MAT_DIALOG_DATA) public data: SettingDialogData
   ) { }
 
   ngOnInit(): void {
