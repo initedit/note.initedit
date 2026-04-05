@@ -1,500 +1,580 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
-import { NoteService } from '../note.service';
-import { Router, ActivatedRoute } from '@angular/router';
-import { NoteCreateRequestModel, NoteCreateRequestWithTabsModel } from '../model/note-create-request-model';
 import { HttpErrorResponse } from '@angular/common/http';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { Observable, Subject, of } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
+import { NoteCollectionComponent } from '../note-collection/note-collection.component';
+import { NoteService } from '../note.service';
+import { NoteCreateRequestModel, NoteCreateRequestWithTabsModel } from '../model/note-create-request-model';
 import { NoteResponseModel } from '../model/note-response-model';
+import { NoteTabUiModel } from '../model/note-tab-ui-model';
 import Utils from '../Util';
 import { ToastService } from '../toast.service';
-import { NoteTabUiModel } from '../model/note-tab-ui-model';
-import { NoteCollectionComponent } from '../note-collection/note-collection.component';
 import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';
-import {MatDialog, MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
-import { Observable, of } from 'rxjs';
 import { AuthDialogComponentComponent } from '../shared/auth-dialog-component/auth-dialog-component.component';
 import { CreatePasswordDialogComponentComponent } from '../shared/create-password-dialog-component/create-password-dialog-component.component';
-import { finalize } from 'rxjs/operators';
-import {CdkDragDrop, moveItemInArray, transferArrayItem} from '@angular/cdk/drag-drop';
+
+type NoteCollectionAction =
+  | 'SET_PASSWORD'
+  | 'UNLOCK'
+  | 'LOGOUT'
+  | 'TOGGLE_MENU_LEFT'
+  | 'DOWNLOAD_CURRENT_TAB'
+  | 'DELETE_NOTE';
+
+type MenuAction = 'OPEN_MENU_LEFT' | 'CLOSE_MENU_LEFT' | 'TOGGLE_MENU_LEFT';
 
 @Component({
-    selector: 'app-note',
-    templateUrl: './note.component.html',
-    styleUrls: ['./note.component.css'],
-    standalone: false
+  selector: 'app-note',
+  templateUrl: './note.component.html',
+  styleUrls: ['./note.component.css'],
+  standalone: false
 })
-export class NoteComponent implements OnInit {
-  response: NoteResponseModel;
-  noteCollection: NoteTabUiModel[];
-  filteredNoteCollection: NoteTabUiModel[];
-  menuLeftVisible: boolean = false;
-  selectedNote: NoteTabUiModel;
-  selectedNotesTabIndex: number = 0;
-  authModel: any;
+export class NoteComponent implements OnInit, OnDestroy {
+  response: NoteResponseModel | null = null;
+  noteCollection: NoteTabUiModel[] = [];
+  filteredNoteCollection: NoteTabUiModel[] = [];
+  menuLeftVisible = false;
+  selectedNote: NoteTabUiModel | null = null;
+  selectedNotesTabIndex = 0;
+  isFetchingNoteList = false;
+  currentSlug = '';
 
   @ViewChild(NoteCollectionComponent)
-  noteCollectionComponent: NoteCollectionComponent
+  noteCollectionComponent?: NoteCollectionComponent;
 
-  @ViewChild("searchInput")
-  searchInput: ElementRef<HTMLInputElement>
+  @ViewChild('searchInput')
+  searchInput?: ElementRef<HTMLInputElement>;
 
-  isFetchingNoteList: boolean = false
+  private readonly destroy$ = new Subject<void>();
+  private authDialogRef?: MatDialogRef<AuthDialogComponentComponent>;
 
-
-  constructor(private noteService: NoteService, private router: Router, private toastService: ToastService, private route: ActivatedRoute, public dialog: MatDialog) {
-    const fragment: string = route.snapshot.fragment;
-    try {
-      let i = parseInt(fragment);
-      if (i > 0) {
-        this.selectedNotesTabIndex = i;
-      }
-    } catch (ex) {
-
-    }
-
+  constructor(
+    private noteService: NoteService,
+    private router: Router,
+    private toastService: ToastService,
+    private route: ActivatedRoute,
+    public dialog: MatDialog
+  ) {
+    this.currentSlug = this.resolveCurrentNoteSlug();
+    this.selectedNotesTabIndex = this.parseFragmentIndex(this.route.snapshot.fragment);
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.refreshNoteData();
-    this.noteService.onPasswordUpdated().subscribe(value => {
-      if (value != null) {
-        this.updateNotePassword(value)
-      }
-    })
+    this.noteService.onPasswordUpdated()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((password) => {
+        if (password) {
+          this.updateNotePassword(password);
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   canDeactivate(): Observable<boolean> | boolean {
-    if (this.noteCollectionComponent.hasUnsavedNotes()) {
-      const result = window.confirm('Changes you made may not be saved.');
-      return of(result);
+    if (this.noteCollectionComponent?.hasUnsavedNotes()) {
+      return of(window.confirm('Changes you made may not be saved.'));
     }
+
     return true;
   }
+
   @HostListener('window:beforeunload', ['$event'])
-  showLeaveMessage($event: BeforeUnloadEvent) {
-    if (this.noteCollectionComponent.hasUnsavedNotes()) {
-      var confirmationMessage = "\o/";
-      $event.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
-      return confirmationMessage;              // Gecko, WebKit, Chrome <34
+  showLeaveMessage($event: BeforeUnloadEvent): string | void {
+    if (this.noteCollectionComponent?.hasUnsavedNotes()) {
+      const confirmationMessage = '\\o/';
+      $event.returnValue = confirmationMessage;
+      return confirmationMessage;
     }
   }
 
   @HostListener('document:keydown', ['$event'])
-  onKeyDown(e: KeyboardEvent) {
-
-    const keyLetter = e.key.toLowerCase();
-    if (keyLetter === 'escape') {
+  onKeyDown(event: KeyboardEvent): void {
+    if (event.key.toLowerCase() === 'escape') {
       this.menuEvent('CLOSE_MENU_LEFT');
     }
   }
 
-  refreshNoteData() {
+  refreshNoteData(): void {
     const slug = this.getCurrentNoteSlug();
     this.isFetchingNoteList = true;
-    var objResponse = this.noteService.fetchNote(slug).pipe(
-      finalize(() => {
-        this.isFetchingNoteList = false;
-      })
-    )
-      .subscribe((response: NoteResponseModel) => {
-        this.response = response;
-        this.noteService.setActiveNote(this.response);
-        this.noteCollection = response.content;
-        if (this.selectedNotesTabIndex >= 0 && this.noteCollection.length >= this.selectedNotesTabIndex) {
-          let visibleCount = 0;
-          this.noteCollection.every((tab: NoteTabUiModel) => {
-            if (tab.visibility == 1) {
-              visibleCount++;
-            }
-            if (visibleCount == this.selectedNotesTabIndex) {
-              this.selectedNote = tab;
-              return false;
-            }
-            return true;
-          });
-          if (!this.selectedNote && this.noteCollection.length > 0) {
-            this.selectedNote = this.noteCollection[0];
-          }
-          this.selectedNotesTabIndex = -1;
-        } else
-          if (this.selectedNote) {
-            const visibleNotes = this.noteCollection.filter(item => item.visibility == 1);
-            let selectedNote = visibleNotes.filter(item => {
-              return item.id == this.selectedNote.id && item.slug == this.selectedNote.slug
-            });
-            if (selectedNote.length > 0) {
-              this.selectedNote = selectedNote.pop();
-            } else if (visibleNotes.length > 0) {
-              this.selectedNote = visibleNotes[0];
-            }
-          }
-      },
-        (error: HttpErrorResponse) => {
-          let objError = error.error;
-          if (error.status == 404) {
-            //Note not found & available for creating new
-            let request = new NoteCreateRequestModel();
-            request.name = this.getCurrentNoteSlug();
-            request.type = 'Public';
-            request.password = '';
-            this.noteService.createNewNote(request)
-              .subscribe(sucess => {
-                this.refreshNoteData();
-              },
-                (error: HttpErrorResponse) => {
-                });
-          } else if (error.status == 401) {
-            // Authorization Failed
-            this.showValidatePasswordDialog();
-          }
-        });
+
+    this.noteService.fetchNote(slug)
+      .pipe(
+        finalize(() => {
+          this.isFetchingNoteList = false;
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (response) => this.handleFetchedNote(response),
+        error: (error) => this.handleRefreshError(error, slug)
+      });
   }
 
-  getCurrentNoteSlug() {
-    return this.route.snapshot.url[0].path.toLowerCase();
-  }
-  validatePassword(password: string) {
-    let slug = this.getCurrentNoteSlug();
-    let encPassword = Utils.noteEncrypt(slug, '/' + slug, password);
-    this.noteService.authenticate(slug, encPassword)
-      .subscribe((response: NoteResponseModel) => {
-        if (response.code == 1) {
-          if (this.authModel) {
-            this.authModel.close();
-          }
-          //valid password
-          this.noteService.addPassword(slug, encPassword, password);
-          this.toastService.showToast('Unlocked');
-          const fragment: string = this.route.snapshot.fragment;
-          try {
-            let i = parseInt(fragment);
-            if (i > 0) {
-              this.selectedNotesTabIndex = i;
-            }
-          } catch (ex) {
-
-          }
-          this.refreshNoteData();
-        } else {
-          this.toastService.showToast('Invalid Password')
-        }
-      })
+  getCurrentNoteSlug(): string {
+    this.currentSlug = this.resolveCurrentNoteSlug();
+    return this.currentSlug;
   }
 
-  noteCollectionEvent($event: any) {
-    if ($event == 'SET_PASSWORD') {
-      this.showSetNewPasswordDialog();
-    } else if ($event == 'UNLOCK') {
-      this.showValidatePasswordDialog();
-    } else if ($event == 'LOGOUT') {
-      let hasPendingNotes = this.noteCollectionComponent.hasUnsavedNotes();
-      if (hasPendingNotes) {
-        if (confirm("Changes you made will not be saved.\nDo you still want to lock the notes?") == false) {
+  validatePassword(password: string): void {
+    const slug = this.getCurrentNoteSlug();
+    const encryptedPassword = Utils.noteEncrypt(slug, `/${slug}`, password);
+
+    this.noteService.authenticate(slug, encryptedPassword)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((response) => {
+        if (response.code !== 1) {
+          this.toastService.showToast('Invalid Password');
           return;
         }
-      }
 
-      this.noteService.removePassword(this.getCurrentNoteSlug());
-      if (this.response.info.type == 'Private' || hasPendingNotes) {
-        this.noteCollection = [];
-        this.response = null;
+        this.authDialogRef?.close();
+        this.noteService.addPassword(slug, encryptedPassword, password);
+        this.toastService.showToast('Unlocked');
+        this.selectedNotesTabIndex = this.parseFragmentIndex(this.route.snapshot.fragment);
         this.refreshNoteData();
-      }
-      this.toastService.showToast('Locked');
-    } else if ($event == 'TOGGLE_MENU_LEFT') {
-      this.menuEvent("TOGGLE_MENU_LEFT");
-    } else if ($event == 'DOWNLOAD_CURRENT_TAB') {
-      this.downloadNoteTab(this.selectedNote);
-    } else if ($event == 'DELETE_NOTE') {
-      this.deleteNote(this.selectedNote);
+      });
+  }
+
+  noteCollectionEvent(action: NoteCollectionAction): void {
+    switch (action) {
+      case 'SET_PASSWORD':
+        this.showSetNewPasswordDialog();
+        return;
+      case 'UNLOCK':
+        this.showValidatePasswordDialog();
+        return;
+      case 'LOGOUT':
+        this.logoutFromCurrentNote();
+        return;
+      case 'TOGGLE_MENU_LEFT':
+        this.menuEvent('TOGGLE_MENU_LEFT');
+        return;
+      case 'DOWNLOAD_CURRENT_TAB':
+        if (this.selectedNote) {
+          this.downloadNoteTab(this.selectedNote);
+        }
+        return;
+      case 'DELETE_NOTE':
+        this.deleteNote(this.selectedNote);
+        return;
     }
   }
-  setNotePassword(password: string, isPrivate: boolean) {
-    let slug = this.getCurrentNoteSlug();
-    let encPassword = Utils.noteEncrypt(slug, '/' + slug, password);
-    let request = new NoteCreateRequestModel();
+
+  setNotePassword(password: string, isPrivate: boolean): void {
+    const slug = this.getCurrentNoteSlug();
+    const encryptedPassword = Utils.noteEncrypt(slug, `/${slug}`, password);
+    const request = new NoteCreateRequestModel();
     request.name = slug;
-    request.password = encPassword;
+    request.password = encryptedPassword;
     request.type = isPrivate ? 'Private' : 'Protected';
 
-    //if request is private then fetch all tabs content first
-    if (request.type == 'Private') {
-      let ids = new Array<string>();
-      this.response.content.forEach((item: NoteTabUiModel) => {
-        if (item.id && !item.content) {
-          ids.push(item.id);
-        }
-      });
-      if (ids.length > 0) {
-        this.noteService.fetchNoteTabs(slug, ids)
-          .subscribe((response: NoteResponseModel) => {
-            if (response.code == 1) {
-              let collection = response.content;
-              this.response.content.forEach((item: NoteTabUiModel) => {
-                if (ids.indexOf(item.id) >= 0) {
-                  let encContent = collection.filter((tab: NoteTabUiModel) => {
-                    return tab.id == item.id
-                  })[0].content;
-                  item.content = encContent;
-
-                }
-              });
-              this.makeNotePrivateAndSave(slug, request, encPassword, password);
-            }
-          });
-      } else {
-        this.makeNotePrivateAndSave(slug, request, encPassword, password);
-      }
-
-    } else {
-      this.makeNotePrivateAndSave(slug, request, encPassword, password);
+    if (request.type !== 'Private') {
+      this.makeNotePrivateAndSave(slug, request, encryptedPassword, password);
+      return;
     }
+
+    const ids = this.getMissingContentTabIds();
+    if (ids.length === 0) {
+      this.makeNotePrivateAndSave(slug, request, encryptedPassword, password);
+      return;
+    }
+
+    this.noteService.fetchNoteTabs(slug, ids)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((response) => {
+        if (response.code !== 1 || !this.response) {
+          return;
+        }
+
+        this.response.content.forEach((item) => {
+          if (!item.id || !ids.includes(item.id)) {
+            return;
+          }
+
+          const matchedTab = response.content.find((tab) => tab.id === item.id);
+          if (matchedTab) {
+            item.content = matchedTab.content;
+          }
+        });
+
+        this.makeNotePrivateAndSave(slug, request, encryptedPassword, password);
+      });
   }
 
-  updateNotePassword(password: string) {
-    let slug = this.getCurrentNoteSlug();
-    let encPassword = Utils.noteEncrypt(slug, '/' + slug, password);
-    let request = new NoteCreateRequestWithTabsModel;
+  updateNotePassword(password: string): void {
+    if (!this.response) {
+      return;
+    }
+
+    const slug = this.getCurrentNoteSlug();
+    const encryptedPassword = Utils.noteEncrypt(slug, `/${slug}`, password);
+    const request = new NoteCreateRequestWithTabsModel();
     request.name = slug;
-    request.password = encPassword;
+    request.password = encryptedPassword;
     request.type = this.response.info.type;
     request.items = [];
 
-    let token = this.noteService.getApiToken(slug);
-    console.log(this.response, 'Info');
-    //if request is private then fetch all tabs content first
-    if (request.type == 'Private') {
-      let ids = new Array<string>();
-      this.response.content.forEach((item: NoteTabUiModel) => {
-        if (item.id) {
-          ids.push(item.id);
-        }
-      });
-
-      if (ids.length > 0) {
-        this.noteService.fetchNoteTabs(slug, ids)
-          .subscribe((response: NoteResponseModel) => {
-            if (response.code == 1) {
-              let collection = response.content;
-              let tempContent: NoteTabUiModel[] = JSON.parse(JSON.stringify(this.response.content));
-
-              tempContent.forEach((item: NoteTabUiModel) => {
-                if (ids.indexOf(item.id) >= 0) {
-                  let encContent = collection.filter((tab: NoteTabUiModel) => {
-                    return tab.id == item.id
-                  })[0].content;
-                  item.content = encContent;
-                }
-              });
-
-              let encryptedContent: NoteTabUiModel[] = tempContent.map(item => {
-                //First Descrypt Note
-                item.content = Utils.noteDecrypt(item.slug, item.content)
-                // //Encrypt with new password
-                item.content = Utils.noteEncrypt(item.slug, item.content, request.password)
-                item.title = Utils.noteEncrypt(item.slug, item.title, request.password)
-
-                return item;
-              })
-              //TODO:: Decrypt/Encrypt Notes Content
-              request.items = encryptedContent;
-              this.saveUpdatedNotePassword(slug, request, encPassword, password, token);
-            }
-          });
-      } else {
-        this.saveUpdatedNotePassword(slug, request, encPassword, password, token);
-      }
-
-    } else {
-      this.saveUpdatedNotePassword(slug, request, encPassword, password, token);
+    const token = this.noteService.getApiToken(slug);
+    if (request.type !== 'Private') {
+      this.saveUpdatedNotePassword(slug, request, encryptedPassword, password, token);
+      return;
     }
-  }
 
-  private saveUpdatedNotePassword(slug: string, request: NoteCreateRequestWithTabsModel, encPassword: any, password: string, token: string) {
+    const ids = this.response.content.filter((item) => item.id).map((item) => item.id);
+    if (ids.length === 0) {
+      this.saveUpdatedNotePassword(slug, request, encryptedPassword, password, token);
+      return;
+    }
 
-    this.noteService.updateNotePassword(slug, token, request)
-      .subscribe((response: NoteResponseModel) => {
-        if (response.code == 1) {
-          this.noteService.addPassword(slug, encPassword, password);
-          this.response.info.type = request.type;
-          this.toastService.showToast("Updated Password")
-
+    this.noteService.fetchNoteTabs(slug, ids)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((response) => {
+        if (response.code !== 1 || !this.response) {
+          return;
         }
-        else {
-          this.toastService.showToast('Unable to update note');
-        }
-      });
-  }
 
-  private makeNotePrivateAndSave(slug: string, request: NoteCreateRequestModel, encPassword: any, password: string) {
-    this.noteService.updateNote(slug, request)
-      .subscribe((response: NoteResponseModel) => {
-        if (response.code == 1) {
-          this.noteService.addPassword(slug, encPassword, password);
-          this.response.info.type = request.type;
-          if (request.type == 'Private') {
-            this.noteCollection.forEach((tab: NoteTabUiModel) => {
-              tab.modifiedContent = true;
-              tab.modifiedTitle = true;
-            });
-            this.noteCollectionComponent.saveNotes();
+        const tempContent: NoteTabUiModel[] = JSON.parse(JSON.stringify(this.response.content));
+        tempContent.forEach((item) => {
+          const matchedTab = response.content.find((tab) => tab.id === item.id);
+          if (matchedTab) {
+            item.content = matchedTab.content;
           }
-        }
-        else {
-          this.toastService.showToast('Unable to create note');
-        }
+        });
+
+        request.items = tempContent.map((item) => {
+          item.content = Utils.noteEncrypt(
+            item.slug,
+            Utils.noteDecrypt(item.slug, item.content),
+            request.password
+          );
+          item.title = Utils.noteEncrypt(item.slug, item.title, request.password);
+          return item;
+        });
+
+        this.saveUpdatedNotePassword(slug, request, encryptedPassword, password, token);
       });
   }
 
-  menuEvent($event: any) {
-    if ($event == 'OPEN_MENU_LEFT') {
-      this.filteredNoteCollection = this.noteCollection;
-      this.menuLeftVisible = true;
-      (this.searchInput.nativeElement as HTMLInputElement).focus()
-    } else if ($event == 'CLOSE_MENU_LEFT') {
-      this.menuLeftVisible = false;
-    } else if ($event == 'TOGGLE_MENU_LEFT') {
-      this.menuLeftVisible = !this.menuLeftVisible;
-      if (this.menuLeftVisible) {
-        (this.searchInput.nativeElement as HTMLInputElement).focus()
-        this.filteredNoteCollection = this.noteCollection;
-      }
+  menuEvent(action: MenuAction): void {
+    switch (action) {
+      case 'OPEN_MENU_LEFT':
+        this.menuLeftVisible = true;
+        this.filteredNoteCollection = [...this.noteCollection];
+        this.focusSearchInput();
+        return;
+      case 'CLOSE_MENU_LEFT':
+        this.menuLeftVisible = false;
+        return;
+      case 'TOGGLE_MENU_LEFT':
+        this.menuLeftVisible = !this.menuLeftVisible;
+        if (this.menuLeftVisible) {
+          this.filteredNoteCollection = [...this.noteCollection];
+          this.focusSearchInput();
+        }
     }
   }
-  showDeleteConfirmationTab(tab: NoteTabUiModel) {
-    if (this.noteCollectionComponent.isNoteLocked() &&
-      this.noteCollectionComponent.isNoteAuthorized() == false) {
+
+  showDeleteConfirmationTab(tab: NoteTabUiModel): void {
+    if (this.noteCollectionComponent?.isNoteLocked() && !this.noteCollectionComponent.isNoteAuthorized()) {
       this.toastService.showToast('Unlock note and try again.');
       return;
     }
 
     const dialogRef = this.dialog.open(ConfirmDialogComponentComponent, {
       data: {
-        Title: "Delete?",
-        Message: "Are you sure you want to delete tab?"
+        Title: 'Delete?',
+        Message: 'Are you sure you want to delete tab?'
       }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.deleteTab(tab)
-      }
-    });
+    dialogRef.afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((result) => {
+        if (result) {
+          this.deleteTab(tab);
+        }
+      });
   }
-  deleteTab(tab: NoteTabUiModel) {
-    if (tab.id) {
-      this.noteService.deleteNoteTab(tab.slug, tab.id)
-        .subscribe((response: NoteResponseModel) => {
-          if (response.code == 1) {
-            this.removeNoteTabFromCollection(tab);
-          } else {
-            this.toastService.showToast('Unable to delete tab');
-          }
-        }, err => {
-          //Handle Authorization Rejection
-        });
-    } else {
+
+  deleteTab(tab: NoteTabUiModel): void {
+    if (!tab.id) {
       this.removeNoteTabFromCollection(tab);
+      return;
     }
-  }
-  deleteNote(tab: NoteTabUiModel) {
-    if (tab) {
-      this.noteService.deleteNote(tab.slug)
-        .subscribe((response: NoteResponseModel) => {
-          if (response.code == 1) {
-            this.refreshNoteData()
-          } else {
-            this.toastService.showToast('Unable to delete note.');
+
+    this.noteService.deleteNoteTab(tab.slug, tab.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.code === 1) {
+            this.removeNoteTabFromCollection(tab);
+            return;
           }
-        }, err => {
-          //Handle Authorization Rejection
-        });
-    } else {
+
+          this.toastService.showToast('Unable to delete tab');
+        }
+      });
+  }
+
+  deleteNote(tab: NoteTabUiModel | null): void {
+    if (!tab) {
       this.toastService.showToast('Something went wrong.Try again after some time');
+      return;
     }
-  }
-  removeNoteTabFromCollection(tab: NoteTabUiModel) {
-    let index = this.noteCollection.indexOf(tab);
-    this.noteCollection.splice(index, 1);
-    if (this.noteCollection.filter(n => n.visibility).length == 0) {
-      this.noteCollectionComponent.addNewNoteTab()
-    }
-    this.toastService.showToast('Deleted tabs');
+
+    this.noteService.deleteNote(tab.slug)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.code === 1) {
+            this.refreshNoteData();
+            return;
+          }
+
+          this.toastService.showToast('Unable to delete note.');
+        }
+      });
   }
 
-  // sortableOption: SortableData = {
-  //   onUpdate: (event: any) => {
-  //     this.noteCollection.forEach((note: NoteTabUiModel, index: number) => {
-  //       note.order_index = (index + 1);
-  //       note.modifiedOrder = true;
-  //     })
-  //   },
-  //   handle: ".sort-handle"
-  // }
-
-  drop(event: CdkDragDrop<NoteTabUiModel[]>) {
+  drop(event: CdkDragDrop<NoteTabUiModel[]>): void {
     moveItemInArray(this.filteredNoteCollection, event.previousIndex, event.currentIndex);
-    this.noteCollection.forEach((note: NoteTabUiModel, index: number) => {
-            note.order_index = (index + 1);
-            note.modifiedOrder = true;
-    })
+    this.noteCollection.forEach((note, index) => {
+      note.order_index = index + 1;
+      note.modifiedOrder = true;
+    });
   }
 
-  showSetNewPasswordDialog() {
-    let dialogRef = this.dialog.open(CreatePasswordDialogComponentComponent, {
+  showSetNewPasswordDialog(): void {
+    const dialogRef = this.dialog.open(CreatePasswordDialogComponentComponent, {
       data: {},
-      width: "400px",
+      width: '400px'
     });
-    dialogRef.afterClosed().subscribe(result => {
-      if (result != null) {
-        this.setNotePassword(result.password, result.isPrivate);
-      }
-    })
+
+    dialogRef.afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((result) => {
+        if (result) {
+          this.setNotePassword(result.password, result.isPrivate);
+        }
+      });
   }
-  showValidatePasswordDialog() {
-    this.authModel = this.dialog.open(AuthDialogComponentComponent, {
+
+  showValidatePasswordDialog(): void {
+    this.authDialogRef = this.dialog.open(AuthDialogComponentComponent, {
       data: {
         onChange: this.authenticatUserWithModel.bind(this)
       },
-      width: "400px",
+      width: '400px'
     });
-
   }
 
-  authenticatUserWithModel(pass) {
-    console.log(pass);
+  authenticatUserWithModel(pass: string): void {
     this.validatePassword(pass);
   }
 
-
-
-  search(val: string) {
-    this.filteredNoteCollection = [];
-    this.noteCollection.forEach(n => {
-      if (n.title.toLowerCase().indexOf(val.toLowerCase()) !== -1) {
-        this.filteredNoteCollection.push(n);
-      }
-    });
+  search(val: string): void {
+    const searchTerm = val.toLowerCase();
+    this.filteredNoteCollection = this.noteCollection.filter((note) => note.title.toLowerCase().includes(searchTerm));
   }
 
-  downloadNoteTab(tabData: NoteTabUiModel) {
-
-    const tabBlog = new Blob([tabData.content], {
-      type: 'text/plain'
-    });
-    const a = document.createElement('a');
-    const url = window.URL.createObjectURL(tabBlog);
-    a.href = url;
-    a.download = tabData.title + ".txt";
-    a.click();
+  downloadNoteTab(tabData: NoteTabUiModel): void {
+    const tabBlob = new Blob([tabData.content], { type: 'text/plain' });
+    const anchor = document.createElement('a');
+    const url = window.URL.createObjectURL(tabBlob);
+    anchor.href = url;
+    anchor.download = `${tabData.title}.txt`;
+    anchor.click();
     window.URL.revokeObjectURL(url);
   }
 
-  updateSelectedNote(note: NoteTabUiModel) {
+  updateSelectedNote(note: NoteTabUiModel): void {
     this.selectedNote = note;
     this.selectedNote.visibility = 1;
     this.selectedNote.modifiedVisibility = true;
     this.noteService.updateNoteTab(this.selectedNote.slug, this.selectedNote)
-    this.noteCollectionComponent.onChangeSelectedNote(note, true)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.noteCollectionComponent?.onChangeSelectedNote(note, true);
+      });
   }
 
+  private handleFetchedNote(response: NoteResponseModel): void {
+    this.response = response;
+    this.noteService.setActiveNote(response);
+    this.noteCollection = response.content;
+    this.filteredNoteCollection = [...response.content];
+    this.syncSelectedNoteWithResponse();
+  }
+
+  private handleRefreshError(error: HttpErrorResponse, slug: string): void {
+    if (error.status === 404) {
+      const request = new NoteCreateRequestModel();
+      request.name = slug;
+      request.type = 'Public';
+      request.password = '';
+
+      this.noteService.createNewNote(request)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => this.refreshNoteData());
+      return;
+    }
+
+    if (error.status === 401) {
+      this.showValidatePasswordDialog();
+    }
+  }
+
+  private syncSelectedNoteWithResponse(): void {
+    if (!this.noteCollection.length) {
+      this.selectedNote = null;
+      return;
+    }
+
+    if (this.selectedNotesTabIndex > 0) {
+      this.selectedNote = this.findVisibleTabByIndex(this.selectedNotesTabIndex) ?? this.noteCollection[0];
+      this.selectedNotesTabIndex = -1;
+      return;
+    }
+
+    if (!this.selectedNote) {
+      this.selectedNote = this.noteCollection[0];
+      return;
+    }
+
+    const visibleNotes = this.noteCollection.filter((item) => item.visibility === 1);
+    const existingSelection = visibleNotes.find((item) => item.id === this.selectedNote?.id && item.slug === this.selectedNote.slug);
+    this.selectedNote = existingSelection ?? visibleNotes[0] ?? this.noteCollection[0];
+  }
+
+  private findVisibleTabByIndex(index: number): NoteTabUiModel | undefined {
+    let visibleCount = 0;
+    for (const tab of this.noteCollection) {
+      if (tab.visibility === 1) {
+        visibleCount++;
+      }
+
+      if (visibleCount === index) {
+        return tab;
+      }
+    }
+
+    return undefined;
+  }
+
+  private logoutFromCurrentNote(): void {
+    const hasPendingNotes = this.noteCollectionComponent?.hasUnsavedNotes() ?? false;
+    if (hasPendingNotes && !confirm('Changes you made will not be saved.\nDo you still want to lock the notes?')) {
+      return;
+    }
+
+    this.noteService.removePassword(this.getCurrentNoteSlug());
+    if (this.response?.info.type === 'Private' || hasPendingNotes) {
+      this.noteCollection = [];
+      this.filteredNoteCollection = [];
+      this.response = null;
+      this.selectedNote = null;
+      this.refreshNoteData();
+    }
+
+    this.toastService.showToast('Locked');
+  }
+
+  private getMissingContentTabIds(): string[] {
+    return (this.response?.content ?? [])
+      .filter((item) => item.id && !item.content)
+      .map((item) => item.id);
+  }
+
+  private saveUpdatedNotePassword(
+    slug: string,
+    request: NoteCreateRequestWithTabsModel,
+    encryptedPassword: string,
+    password: string,
+    token: string
+  ): void {
+    this.noteService.updateNotePassword(slug, token, request)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((response) => {
+        if (response.code === 1) {
+          this.noteService.addPassword(slug, encryptedPassword, password);
+          if (this.response) {
+            this.response.info.type = request.type;
+          }
+          this.toastService.showToast('Updated Password');
+          return;
+        }
+
+        this.toastService.showToast('Unable to update note');
+      });
+  }
+
+  private makeNotePrivateAndSave(
+    slug: string,
+    request: NoteCreateRequestModel,
+    encryptedPassword: string,
+    password: string
+  ): void {
+    this.noteService.updateNote(slug, request)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((response) => {
+        if (response.code !== 1) {
+          this.toastService.showToast('Unable to create note');
+          return;
+        }
+
+        this.noteService.addPassword(slug, encryptedPassword, password);
+        if (this.response) {
+          this.response.info.type = request.type;
+        }
+
+        if (request.type === 'Private') {
+          this.noteCollection.forEach((tab) => {
+            tab.modifiedContent = true;
+            tab.modifiedTitle = true;
+          });
+          this.noteCollectionComponent?.saveNotes();
+        }
+      });
+  }
+
+  private removeNoteTabFromCollection(tab: NoteTabUiModel): void {
+    const index = this.noteCollection.indexOf(tab);
+    if (index >= 0) {
+      this.noteCollection.splice(index, 1);
+    }
+
+    this.filteredNoteCollection = this.filteredNoteCollection.filter((item) => item !== tab);
+    if (!this.noteCollection.some((note) => note.visibility === 1)) {
+      this.noteCollectionComponent?.addNewNoteTab();
+    }
+
+    this.toastService.showToast('Deleted tabs');
+  }
+
+  private resolveCurrentNoteSlug(): string {
+    const routeSlug = this.route.snapshot.paramMap.get('slug') ?? this.route.snapshot.url[0]?.path ?? '';
+    return routeSlug.toLowerCase();
+  }
+
+  private parseFragmentIndex(fragment: string | null): number {
+    if (!fragment) {
+      return 0;
+    }
+
+    const parsedIndex = Number.parseInt(fragment, 10);
+    return Number.isNaN(parsedIndex) || parsedIndex < 1 ? 0 : parsedIndex;
+  }
+
+  private focusSearchInput(): void {
+    setTimeout(() => this.searchInput?.nativeElement.focus(), 0);
+  }
 }

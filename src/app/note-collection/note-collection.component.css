@@ -14,27 +14,48 @@
   overflow-x: auto;
 }
 .tab-scrollerbar{
-  display: table;
-  width:100%;
-  padding-right: 2em;
+  display: block;
+  min-width: 100%;
   background-color: #111;
 }
 .tab-contaniner{
   position: relative;
-  display: table-row;
+  display: flex;
+  align-items: stretch;
+  width: max-content;
+  min-width: 100%;
   min-height: 2em;
 }
 
 .tab-contaniner .tab{
   position: relative;
-  width: 200px;
+  flex: 0 0 200px;
   cursor: pointer;
   background-color: #222;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   padding: 0.25em;
-  display: table-cell;
+  display: block;
   height: 2.3em;
+}
+.tab-contaniner .btn-add-tab{
+  flex: 0 0 auto;
+  width: 2.3em;
+  height: 2.3em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  position: static;
+  padding: 0;
+  margin: 0;
+  background-color: #111;
+  color: #EEE;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  line-height: 1;
+  box-sizing: border-box;
+  z-index: auto;
 }
 .tab-contaniner .tab.active{
   background-color: #666;

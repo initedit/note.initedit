@@ -1,26 +1,14 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subject, Observer } from 'rxjs';
-import { MatSnackBar} from '@angular/material/snack-bar';
+import { Observable, Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ToastService {
+  private readonly messageSubject = new Subject<string>();
+  readonly message$: Observable<string> = this.messageSubject.asObservable();
 
-  messages:string[];
-  message:Observable<string>
-  observer:Observer<string>;
-  constructor(private _snackBar: MatSnackBar) {
-    this.messages = new Array<string>();
-    this.message = new Observable((observer:Observer<string>)=>{
-      this.observer = observer;
-    });
-
+  public showToast(value: string): void {
+    this.messageSubject.next(value);
   }
-
-  public showToast(val:string){
-    this.messages.push(val);
-    this.observer.next(val);
-  }
-
 }

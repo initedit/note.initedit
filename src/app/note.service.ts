@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { NoteCreateRequestModel, NoteCreateRequestWithTabsModel } from './model/note-create-request-model';
 import { NoteTabCreateRequestModel } from './model/note-tab-create-request-model';
@@ -7,21 +7,25 @@ import { NoteResponseModel, SingleNoteResponseModel } from './model/note-respons
 import Utils from './Util';
 import { NoteItemsTemplate } from './model/note-items-template';
 import { environment } from 'src/environments/environment';
+import { DEFAULT_NOTE_GENERAL_SETTING, NoteGeneralSetting } from './model/note-general-setting.model';
+import { NoteCacheEntry, NoteCacheModel } from './model/note-cache.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NoteService {
+  private static readonly NOTE_CACHE_KEY = 'cacheNotes';
+  private static readonly GENERAL_SETTING_KEY = 'setting.general';
+  private static readonly PASSWORD_SUFFIX = '_PASS';
+  private static readonly MAX_CACHE_NOTES = 5;
+
   private baseUrl = environment.apiEndpoint;
 
-  private rxNotePasswordChanged: BehaviorSubject<any>;
-  private rxNoteGeneralSetting: BehaviorSubject<any>;
-  private rxNoteActive: BehaviorSubject<NoteResponseModel>;
+  private readonly rxNotePasswordChanged = new BehaviorSubject<string | null>(null);
+  private readonly rxNoteGeneralSetting = new BehaviorSubject<NoteGeneralSetting>(this.getGeneralSetting());
+  private readonly rxNoteActive = new BehaviorSubject<NoteResponseModel | null>(null);
 
   constructor(private http: HttpClient) {
-    this.rxNotePasswordChanged = new BehaviorSubject(null);
-    this.rxNoteActive = new BehaviorSubject(null);
-    this.rxNoteGeneralSetting = new BehaviorSubject(this.getGeneralSetting());
   }
 
   addPassword(slug: string, encToken: string, vanilaPass: string): boolean {
@@ -29,248 +33,193 @@ export class NoteService {
     localStorage.setItem(slug, encToken);
     // const normalPassword = Utils.normalizeKey(vanilaPass);
     const normalPassword = Utils.normalizeKey(encToken);
-    localStorage.setItem(slug + '_PASS', normalPassword);
+    localStorage.setItem(this.getPasswordStorageKey(slug), normalPassword);
     return true;
   }
+
   removePassword(slug: string): boolean {
     localStorage.removeItem(slug);
-    localStorage.removeItem(slug + '_PASS');
+    localStorage.removeItem(this.getPasswordStorageKey(slug));
     return true;
   }
+
   getPassword(slug: string): string {
-    return localStorage.getItem(slug);
+    return localStorage.getItem(slug) ?? '';
   }
+
   onPasswordUpdated(): Observable<string> {
     return this.rxNotePasswordChanged.asObservable();
   }
-  updatePassword(password) {
+
+  updatePassword(password: string): void {
     this.rxNotePasswordChanged.next(password);
   }
 
-
   authenticate(slug: string, password: string): Observable<NoteResponseModel> {
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json', 'token': password })
-    };
-    return this.http.post<NoteResponseModel>(this.getAPIUrl('note/' + slug + '/auth'), {}, httpOptions)
+    return this.http.post<NoteResponseModel>(
+      this.getAPIUrl(`note/${slug}/auth`),
+      {},
+      this.getJsonHttpOptions(password)
+    );
   }
 
-  addNoteToCache(slug: string){
-    let noteCache = this.getNoteCache();
+  addNoteToCache(slug: string): void {
+    const noteCache = this.getNoteCache();
 
-    const existingNote = noteCache.notes.find(item=>item.slug===slug);
-    if(existingNote){
+    const existingNote = noteCache.notes.find((item) => item.slug === slug);
+    if (existingNote) {
       existingNote.updatedAt = Date.now();
-    }else{
-      const newNote = {
-        slug: slug,
+    } else {
+      const newNote: NoteCacheEntry = {
+        slug,
         addedAt: Date.now(),
         updatedAt: Date.now()
-      }
+      };
       noteCache.notes.push(newNote);
     }
 
-    const sortedNotes = noteCache.notes.sort((a,b)=>{
+    const sortedNotes = noteCache.notes.sort((a, b) => {
       return b.updatedAt - a.updatedAt;
     });
 
     // Keep Max in Cache
-    const maxInCache = 5;
-    if(sortedNotes.length>maxInCache){
-      for(let i=maxInCache;i<sortedNotes.length;i++){
-       const remove = noteCache.notes.indexOf(sortedNotes[i]);
-       noteCache.notes.splice(remove,1);
+    if (sortedNotes.length > NoteService.MAX_CACHE_NOTES) {
+      for (let i = NoteService.MAX_CACHE_NOTES; i < sortedNotes.length; i++) {
+        const remove = noteCache.notes.indexOf(sortedNotes[i]);
+        noteCache.notes.splice(remove, 1);
       }
     }
 
-    localStorage.setItem('cacheNotes', JSON.stringify(noteCache));
+    localStorage.setItem(NoteService.NOTE_CACHE_KEY, JSON.stringify(noteCache));
   }
 
-  getNoteCache(){
-    let noteCacheString  = localStorage.getItem('cacheNotes');
-    let noteCache = {
-      notes:[],
+  getNoteCache(): NoteCacheModel {
+    const noteCacheString = localStorage.getItem(NoteService.NOTE_CACHE_KEY);
+    let noteCache: NoteCacheModel = {
+      notes: []
     };
-    if(noteCacheString){
+    if (noteCacheString) {
       noteCache = JSON.parse(noteCacheString);
     }
     return noteCache;
-
   }
-
 
   fetchNote(slug: string): Observable<NoteResponseModel> {
     this.addNoteToCache(slug);
-    let token = this.getApiToken(slug);;
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
-    };
-    if (token) {
-      httpOptions.headers = httpOptions.headers.append('token', token);
-    }
-    return this.http.get<NoteResponseModel>(this.getAPIUrl('note/' + slug), httpOptions)
+    return this.http.get<NoteResponseModel>(this.getAPIUrl(`note/${slug}`), this.getJsonHttpOptions(this.getApiToken(slug)));
   }
 
-  fetchNoteTab(slug: string, tabid: any): Observable<SingleNoteResponseModel> {
-    let token = this.getApiToken(slug);
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
-    };
-    if (token) {
-      httpOptions.headers = httpOptions.headers.append('token', token);
-    }
-    return this.http.get<SingleNoteResponseModel>(this.getAPIUrl('note/' + slug + '/tab/' + tabid), httpOptions)
-  }
-  fetchNoteTabs(slug: string, ids: any[]): Observable<NoteResponseModel> {
-    let token = this.getApiToken(slug);
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
-    };
-    if (token) {
-      httpOptions.headers = httpOptions.headers.append('token', token);
-    }
-    let strIds = ids.join(',');
-    return this.http.get<NoteResponseModel>(this.getAPIUrl('note/' + slug + '/tabs?ids=' + strIds), httpOptions)
+  fetchNoteTab(slug: string, tabid: string): Observable<SingleNoteResponseModel> {
+    return this.http.get<SingleNoteResponseModel>(
+      this.getAPIUrl(`note/${slug}/tab/${tabid}`),
+      this.getJsonHttpOptions(this.getApiToken(slug))
+    );
   }
 
-  createNewNote(request: NoteCreateRequestModel): any {
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
-    };
-    return this.http.post(this.getAPIUrl('note'), request, httpOptions)
+  fetchNoteTabs(slug: string, ids: string[]): Observable<NoteResponseModel> {
+    const strIds = ids.join(',');
+    return this.http.get<NoteResponseModel>(
+      this.getAPIUrl(`note/${slug}/tabs?ids=${strIds}`),
+      this.getJsonHttpOptions(this.getApiToken(slug))
+    );
   }
 
-  createNewNoteTab(slug: string, request: NoteTabCreateRequestModel): any {
-    let token = this.getApiToken(slug);
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
-    };
-    if (token) {
-      httpOptions.headers = httpOptions.headers.append('token', token);
-    }
-    return this.http.post(this.getAPIUrl('note/' + slug + '/tab'), request, httpOptions)
+  createNewNote(request: NoteCreateRequestModel): Observable<NoteResponseModel> {
+    return this.http.post<NoteResponseModel>(this.getAPIUrl('note'), request, this.getJsonHttpOptions());
   }
 
-  createNewNoteTabs(slug: string, request: NoteItemsTemplate<NoteTabCreateRequestModel>): any {
-    let token = this.getApiToken(slug);
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
-    };
-    if (token) {
-      httpOptions.headers = httpOptions.headers.append('token', token);
-    }
-    return this.http.post(this.getAPIUrl('note/' + slug + '/tabs'), request, httpOptions)
+  createNewNoteTab(slug: string, request: NoteTabCreateRequestModel): Observable<unknown> {
+    return this.http.post(this.getAPIUrl(`note/${slug}/tab`), request, this.getJsonHttpOptions(this.getApiToken(slug)));
   }
 
-  updateNote(slug: string, request: NoteCreateRequestModel): any {
-    let token = request.password;
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json', 'token': token })
-    };
-    return this.http.patch(this.getAPIUrl('note/' + slug), request, httpOptions)
+  createNewNoteTabs(slug: string, request: NoteItemsTemplate<NoteTabCreateRequestModel>): Observable<unknown> {
+    return this.http.post(this.getAPIUrl(`note/${slug}/tabs`), request, this.getJsonHttpOptions(this.getApiToken(slug)));
   }
 
-  updateNotePassword(slug: string, token: string, request: NoteCreateRequestWithTabsModel): any {
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json', 'token': token })
-    };
-    return this.http.patch(this.getAPIUrl('note/' + slug), request, httpOptions)
+  updateNote(slug: string, request: NoteCreateRequestModel): Observable<NoteResponseModel> {
+    return this.http.patch<NoteResponseModel>(this.getAPIUrl(`note/${slug}`), request, this.getJsonHttpOptions(request.password));
   }
 
-  updateNoteTab(slug: string, request: NoteTabCreateRequestModel): any {
-    let token = this.getApiToken(slug);
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
-    };
-    if (token) {
-      httpOptions.headers = httpOptions.headers.append('token', token);
-    }
-    return this.http.patch(this.getAPIUrl('note/' + slug + '/tab/' + request.id), request, httpOptions)
+  updateNotePassword(slug: string, token: string, request: NoteCreateRequestWithTabsModel): Observable<NoteResponseModel> {
+    return this.http.patch<NoteResponseModel>(this.getAPIUrl(`note/${slug}`), request, this.getJsonHttpOptions(token));
+  }
+
+  updateNoteTab(slug: string, request: NoteTabCreateRequestModel): Observable<unknown> {
+    return this.http.patch(
+      this.getAPIUrl(`note/${slug}/tab/${request.id}`),
+      request,
+      this.getJsonHttpOptions(this.getApiToken(slug))
+    );
   }
 
   updateNoteTabs(slug: string, request: NoteItemsTemplate<NoteTabCreateRequestModel>): Observable<any> {
-    let token = this.getApiToken(slug);
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
-    };
-    if (token) {
-      httpOptions.headers = httpOptions.headers.append('token', token);
-    }
-    return this.http.patch(this.getAPIUrl('note/' + slug + '/tab'), request, httpOptions)
+    return this.http.patch(this.getAPIUrl(`note/${slug}/tab`), request, this.getJsonHttpOptions(this.getApiToken(slug)));
   }
 
-  deleteNoteTab(slug: string, tabid: any): any {
-    let token = this.getApiToken(slug);
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
-    };
-    if (token && token.length > 0) {
-      httpOptions.headers = httpOptions.headers.append('token', token);
-    }
-    return this.http.delete(this.getAPIUrl('note/' + slug + '/tab/' + tabid), httpOptions)
+  deleteNoteTab(slug: string, tabid: string): Observable<NoteResponseModel> {
+    return this.http.delete<NoteResponseModel>(
+      this.getAPIUrl(`note/${slug}/tab/${tabid}`),
+      this.getJsonHttpOptions(this.getApiToken(slug))
+    );
   }
 
-  deleteNoteTabs(slug: string, tabid: any): any {
-    let token = this.getApiToken(slug);
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
-    };
-    if (token) {
-      httpOptions.headers = httpOptions.headers.append('token', token);
-    }
-    return this.http.delete(this.getAPIUrl('note/' + slug + '/tab/' + tabid), httpOptions)
+  deleteNoteTabs(slug: string, tabid: string): Observable<unknown> {
+    return this.http.delete(this.getAPIUrl(`note/${slug}/tab/${tabid}`), this.getJsonHttpOptions(this.getApiToken(slug)));
   }
 
-  deleteNote(slug: string): any {
-    let token = this.getApiToken(slug);
-    const httpOptions = {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' })
-    };
-    if (token) {
-      httpOptions.headers = httpOptions.headers.append('token', token);
-    }
-    return this.http.delete(this.getAPIUrl('note/' + slug), httpOptions)
+  deleteNote(slug: string): Observable<NoteResponseModel> {
+    return this.http.delete<NoteResponseModel>(this.getAPIUrl(`note/${slug}`), this.getJsonHttpOptions(this.getApiToken(slug)));
   }
 
-
-  getAPIUrl(path: string) {
+  getAPIUrl(path: string): string {
     return this.baseUrl + path;
   }
-  getApiToken(slug: string) {
+
+  getApiToken(slug: string): string {
     return this.getPassword(slug);
   }
 
-  saveGeneralSetting(val: any) {
-    localStorage.setItem("setting.general", JSON.stringify(val));
+  saveGeneralSetting(val: NoteGeneralSetting): void {
+    localStorage.setItem(NoteService.GENERAL_SETTING_KEY, JSON.stringify(val));
     this.rxNoteGeneralSetting.next(this.getGeneralSetting());
   }
 
-  getGeneralSetting() {
-    let defaultVal = {
-      autoSave: true,
-      showTitle: false,
-      enableSpellCheck: false,
-      editorEnableLineNumber: false,
-      editorTheme: 'material-darker'
-    };
-    let obj = {};
-    let currentVal = localStorage.getItem("setting.general");
+  getGeneralSetting(): NoteGeneralSetting {
+    let obj: Partial<NoteGeneralSetting> = {};
+    const currentVal = localStorage.getItem(NoteService.GENERAL_SETTING_KEY);
     if (currentVal) {
       obj = JSON.parse(currentVal);
     }
-    return Object.assign({}, defaultVal, obj);
+    return Object.assign({}, DEFAULT_NOTE_GENERAL_SETTING, obj);
   }
 
-  onGeneralSettingUpdate(): Observable<any> {
+  onGeneralSettingUpdate(): Observable<NoteGeneralSetting> {
     return this.rxNoteGeneralSetting.asObservable();
   }
 
-  setActiveNote(note: NoteResponseModel) {
+  setActiveNote(note: NoteResponseModel): void {
     this.rxNoteActive.next(note);
   }
 
-  onActiveNoteChange(): Observable<NoteResponseModel> {
+  onActiveNoteChange(): Observable<NoteResponseModel | null> {
     return this.rxNoteActive.asObservable();
+  }
+
+  private getJsonHttpOptions(token?: string): { headers: HttpHeaders } {
+    let headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    });
+
+    if (token) {
+      headers = headers.append('token', token);
+    }
+
+    return { headers };
+  }
+
+  private getPasswordStorageKey(slug: string): string {
+    return `${slug}${NoteService.PASSWORD_SUFFIX}`;
   }
 
 }
