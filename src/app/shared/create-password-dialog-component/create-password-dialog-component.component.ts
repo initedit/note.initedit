@@ -7,9 +7,10 @@ interface DialogData {
 }
 
 @Component({
-  selector: 'app-auth-dialog-component',
-  templateUrl: './create-password-dialog-component.component.html',
-  styleUrls: ['./create-password-dialog-component.component.css']
+    selector: 'app-auth-dialog-component',
+    templateUrl: './create-password-dialog-component.component.html',
+    styleUrls: ['./create-password-dialog-component.component.css'],
+    standalone: false
 })
 export class CreatePasswordDialogComponentComponent implements OnInit {
 

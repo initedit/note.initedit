@@ -1,335 +1,326 @@
-import { Component, OnInit, Input, ViewChild, ElementRef, Output, EventEmitter, Inject, HostListener, ViewChildren, QueryList } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  Inject,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  QueryList,
+  ViewChild,
+  ViewChildren
+} from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
+import { BehaviorSubject, forkJoin, Observable, Subject } from 'rxjs';
+import { debounceTime, map, takeUntil, tap } from 'rxjs/operators';
 import { NoteTabUiModel } from '../model/note-tab-ui-model';
 import { NoteService } from '../note.service';
 import { ToastService } from '../toast.service';
 import { NoteResponseInfoModel, NoteResponseModel } from '../model/note-response-model';
 import Utils from '../Util';
-import { DOCUMENT } from '@angular/common';
-import { Router } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponentComponent } from '../shared/confirm-dialog-component/confirm-dialog-component.component';
-import { BehaviorSubject, forkJoin, interval, Observable, Subject } from 'rxjs';
-import { debounceTime, map, tap } from 'rxjs/operators';
-import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
-import { Subscription } from 'rxjs/internal/Subscription';
+import { NoteGeneralSetting } from '../model/note-general-setting.model';
+
+type TabChangeType = 'content' | 'title' | 'visibility' | 'order';
+type NoteCollectionMenuAction =
+  | 'SET_PASSWORD'
+  | 'UNLOCK'
+  | 'LOGOUT'
+  | 'DELETE_NOTE'
+  | 'DOWNLOAD_CURRENT_TAB'
+  | 'TOGGLE_MENU_LEFT';
+
 @Component({
   selector: 'app-note-collection',
   templateUrl: './note-collection.component.html',
-  styleUrls: [
-    './note-collection.component.css',
-  ]
+  styleUrls: ['./note-collection.component.css'],
+  standalone: false
 })
-export class NoteCollectionComponent implements OnInit {
+export class NoteCollectionComponent implements OnInit, AfterViewInit, OnDestroy {
+  noteCollection: NoteTabUiModel[] = [];
+  noteInfo: NoteResponseInfoModel | null = null;
+  selectedNote: NoteTabUiModel = new NoteTabUiModel();
+  authorized = false;
+  isFetchingNoteContent = false;
+  enableSpellCheck = false;
+  editorTheme = '';
+  editorEnableLineNumber = false;
+  autoSaveEnabled = true;
 
-  noteCollection: NoteTabUiModel[];
-  _noteDetails: NoteResponseModel;
-  noteInfo: NoteResponseInfoModel;
-  selectedNote: NoteTabUiModel;
-  authorized: boolean;
-  isFetchingNoteContent: boolean = false;
-  autoSave: BehaviorSubject<any> = new BehaviorSubject(null);
-  enableSpellCheck:boolean;
-  subscriptions: Subscription[] = [];
+  private noteDetails: NoteResponseModel | null = null;
+  private readonly autoSave = new BehaviorSubject<boolean>(false);
+  private readonly destroy$ = new Subject<void>();
+  private currentSlug = '';
   @Output('onAction')
-  toParrent: EventEmitter<any> = new EventEmitter();
-
-  @ViewChild('inputContent')
-  inputContentEl: ElementRef;
-  isLoaded: boolean = false;
+  toParrent: EventEmitter<NoteCollectionMenuAction> = new EventEmitter();
 
   @ViewChildren('itemTitleInput')
-  itemTitleInputCollection: QueryList<ElementRef>;
-
-  @ViewChild('btnInputAdd')
-  btnInputAddEl: ElementRef;
+  itemTitleInputCollection?: QueryList<ElementRef<HTMLInputElement>>;
 
   @ViewChild('tabScrollBar')
-  topScrollbar: ElementRef;
-
-  tabScrollLeft: number
+  topScrollbar?: ElementRef<HTMLDivElement>;
 
   @ViewChildren('itemRef')
-  tabs: QueryList<ElementRef>
+  tabs?: QueryList<ElementRef<HTMLDivElement>>;
+
+  @ViewChild('codemirror')
+  codeMirror?: CodemirrorComponent;
 
   @Input()
-  set activeNote(value: NoteTabUiModel) {
-    this.selectedNote = value;
-    if (this.selectedNote) {
-      this.fetchNoteTabContent();
+  set activeNote(value: NoteTabUiModel | null) {
+    if (!value) {
+      return;
     }
+
+    this.selectedNote = value;
+    this.fetchNoteTabContent();
+    this.syncEditorOptions();
   }
 
-
   @Input()
-  slug: string;
-  set(value: string) {
-    this.slug = value;
-    if (this.noteService.getPassword(this.slug)) {
-      this.authorized = true;
-    } else {
-      this.authorized = false;
-    }
+  set slug(value: string) {
+    this.currentSlug = value;
+    this.authorized = !!this.noteService.getPassword(value);
+  }
+
+  get slug(): string {
+    return this.currentSlug;
   }
 
   @Input('notes')
-  set notes(value: NoteResponseModel) {
-    this._noteDetails = value;
-    if (this._noteDetails) {
-      this.noteCollection = this._noteDetails.content;
-      this.noteCollection.forEach((tab: NoteTabUiModel) => {
-        if (this._noteDetails.info.type == 'Private') {
-          tab.title = Utils.noteDecrypt(tab.slug, tab.title);
+  set notes(value: NoteResponseModel | null) {
+    this.noteDetails = value;
+    if (!value) {
+      this.noteCollection = [];
+      this.noteInfo = null;
+      this.selectedNote = new NoteTabUiModel();
+      return;
+    }
+
+    this.noteCollection = value.content;
+    this.noteInfo = value.info;
+    this.decryptPrivateTitles();
+
+    if (this.noteCollection.length === 0) {
+      this.addNewNoteTab();
+      return;
+    }
+
+    if (!this.selectedNote?.slug) {
+      this.selectedNote = this.noteCollection[0];
+    }
+
+    this.syncEditorOptions();
+  }
+
+  constructor(
+    private noteService: NoteService,
+    private toastService: ToastService,
+    @Inject(DOCUMENT) private document: Document,
+    private router: Router,
+    public dialog: MatDialog,
+    private el: ElementRef
+  ) {
+    this.autoSave
+      .pipe(
+        debounceTime(5000),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((shouldSave) => {
+        if (shouldSave && this.autoSaveEnabled) {
+          this.saveNotes();
         }
       });
-
-
-      this.noteInfo = this._noteDetails.info;
-      if (this.noteCollection.length == 0) {
-        this.addNewNoteTab();
-      }
-      if (this.noteCollection.length > 0 && !this.selectedNote) {
-        this.selectedNote = this.noteCollection[0];
-      }
-    }
   }
 
-  @ViewChild('codemirror')
-  codeMirror: CodemirrorComponent;
-
-  editorTheme:string = '';
-  editorEnableLineNumber: boolean = false;
-
-  constructor(private noteService: NoteService, private toastService: ToastService, @Inject(DOCUMENT) private document: any, private router: Router, public dialog: MatDialog, private el: ElementRef) {
-    this.autoSave.pipe(
-      debounceTime(5000),
-    ).subscribe((val) => {
-      if (val == true) {
-        this.saveNotes()
-      }
-      console.log("Started Auto Saver", val);
-    })
+  ngOnInit(): void {
+    this.noteService.onGeneralSettingUpdate()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((form) => {
+        this.applyGeneralSettings(form);
+      });
   }
 
-  ngOnInit() {
-    this.selectedNote = new NoteTabUiModel();
-    this.noteService.onGeneralSettingUpdate().subscribe(form => {
-      this.enableSpellCheck = form.enableSpellCheck;
-      this.editorEnableLineNumber = form.editorEnableLineNumber;
-      this.editorTheme = form.editorTheme;
+  ngAfterViewInit(): void {
+    this.codeMirror?.registerOnChange((value: string) => {
+      if (!this.selectedNote) {
+        return;
+      }
+
+      this.selectedNote.content = value;
+      this.modifiedTab('content', this.selectedNote);
     });
+
+    this.syncEditorOptions();
   }
 
-  ngAfterViewInit(){
-    this.codeMirror.registerOnChange((val)=>{
-        this.selectedNote.content = val;
-        this.modifiedTab('content', this.selectedNote);
-    });
-    this.subscriptions.push(interval(100).subscribe(val=>{
-      if(this.selectedNote && this.selectedNote.title && this.editorTheme!=='null'){
-        const extensions = this.selectedNote.title.toLowerCase().split(".");
-        if(extensions.length>1){
-          const extension = extensions.pop();
-          if(['js','ts','json','yaml', 'yml', 'php','py','c','cpp','go','sh','bash','zsh','md','xml','html','css','docker','htaccess','conf'].includes(extension)){
-            this.codeMirror.setOptionIfChanged("theme", this.editorTheme);
-            this.codeMirror.setOptionIfChanged("lineNumbers",this.editorEnableLineNumber);
-            return;
-          }
-        }
-      }
-      this.codeMirror.setOptionIfChanged("theme", "null");
-      this.codeMirror.setOptionIfChanged("lineNumbers", false);
-
-    }))
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  @HostListener('window:resize', ['$event'])
-  onWindowsResize(e: any) {
-    this.updateAddButtonLocation();
-  }
-
-  ngDoCheck() {
-    this.updateAddButtonLocation();
-  }
-
-  ngOnDestroy() {
-    this.subscriptions.forEach(subs=>{
-      subs.unsubscribe();
-    })
-}
-
-  updateAddButtonLocation() {
-    if (this.itemTitleInputCollection && this.itemTitleInputCollection.length > 0) {
-      const visibleTitleInputCollection = this.itemTitleInputCollection.filter((item) => {
-        return (item.nativeElement as HTMLElement).clientWidth != 0;
-      })
-      const el = visibleTitleInputCollection[0].nativeElement as HTMLElement;
-      const tabWidth = (el ? el.parentElement.clientWidth : 0) + 1;// border width
-      const tabTop = (this.topScrollbar.nativeElement as HTMLElement).parentElement.offsetTop;
-      const visibleCount = this.noteCollection.filter(n => n.visibility == 1).length;
-      const totalWidth = tabWidth * visibleCount;
-      const btn = this.btnInputAddEl.nativeElement as HTMLButtonElement;
-      const btnWidth = btn.clientWidth;
-      const screenWidth = document.body.clientWidth;
-      btn.style.top = tabTop + "px";
-      if (totalWidth > screenWidth) {
-        btn.style.left = (screenWidth - btnWidth) + "px";
-      } else {
-        btn.style.left = totalWidth + "px";
-      }
-    }
-  }
-  getPosition(inputEl) {
-    let offsetLeft = 0;
-    let offsetTop = 0;
-
-    let el = inputEl;
-
-    while (el) {
-      offsetLeft += el.offsetLeft;
-      offsetTop += el.offsetTop;
-      el = el.parentElement;
-    }
-    return { offsetTop: offsetTop, offsetLeft: offsetLeft }
+  @HostListener('window:resize')
+  onWindowsResize(): void {
   }
 
   @HostListener('document:keydown', ['$event'])
-  onKeyDown(e: KeyboardEvent) {
-    const keyLetter = e.key.toLowerCase();
-    if (e.ctrlKey) {
-      if (keyLetter == 's') {
+  onKeyDown(event: KeyboardEvent): void {
+    let keyLetter = event.key.toLowerCase();
+    if (keyLetter === 'dead') {
+      keyLetter = (event as KeyboardEvent & { code: string }).code.replace('Key', '').toLowerCase();
+    }
+
+    if (event.ctrlKey) {
+      if (keyLetter === 's') {
         this.saveNotes();
-        e.preventDefault();
-      } else if (keyLetter == 'm') {
+        event.preventDefault();
+      } else if (keyLetter === 'm') {
         this.toParrent.emit('TOGGLE_MENU_LEFT');
       }
+      return;
+    }
 
-    } else if (e.altKey) {
-      if (keyLetter == 't') {
+    if (!event.altKey) {
+      return;
+    }
+
+    switch (keyLetter) {
+      case 't':
+      case 'n':
         this.addNewNoteTab();
-      } else if (keyLetter == 'w') {
+        return;
+      case 'w':
         this.hideNoteTab(this.selectedNote);
-      } else if (keyLetter == 'l') {
+        return;
+      case 'l':
         if (this.isNoteAuthorized()) {
           this.removePassword();
-        } else {
-          if (!this.isNoteLocked()) {
-            this.lockCurrentNote();
-          }
+        } else if (!this.isNoteLocked()) {
+          this.lockCurrentNote();
         }
-      } else if (keyLetter == 'u') {
-        if (this.isNoteLocked()) {
-          if (!this.isNoteAuthorized()) {
-            this.unlockCurrentNote();
-          }
+        return;
+      case 'u':
+        if (this.isNoteLocked() && !this.isNoteAuthorized()) {
+          this.unlockCurrentNote();
         }
-      } else if (keyLetter == 'r') {
-        this.selectedNote.isTitleEnabled = true;
-        setTimeout(() => {
-          let el = (document.querySelector('.tab.active .tab-title') as HTMLInputElement);
-          el.focus();
-          el.select();
-        }, 50);
-      } else if (keyLetter == 'e') {
-        (this.inputContentEl.nativeElement as HTMLTextAreaElement).focus();
-        e.preventDefault();
-      } else if (keyLetter == 'n') {
-        this.addNewNoteTab();
-      } else if (keyLetter == 'h') {
+        return;
+      case 'r':
+        this.enableTitleEditing(this.selectedNote);
+        return;
+      case 'e':
+        this.codeMirror?.codeMirror.focus();
+        return;
+      case 'h':
         this.router.navigateByUrl('/');
-      } else if (keyLetter == 'b') {
+        return;
+      case 'b':
         this.toParrent.emit('TOGGLE_MENU_LEFT');
-      } else if (keyLetter == 'c') {
+        return;
+      case 'c':
         this.copyCurrentNoteText();
-      }
-      // Paginations
-      try {
-        const i = parseInt(keyLetter);
-        if (i >= 0 || i <= 9) {
-          this.navigateToPosition(i);
+        return;
+      default: {
+        const index = Number.parseInt(keyLetter, 10);
+        if (!Number.isNaN(index)) {
+          this.navigateToPosition(index);
         }
-      } catch {
-
       }
     }
   }
 
-  navigateToPosition(index: number) {
-    const visibleNotes = this.noteCollection.filter((tab: NoteTabUiModel) => {
-      return tab.visibility === 1;
-    });
+  navigateToPosition(index: number): void {
+    const visibleNotes = this.getVisibleNotes();
+    if (!visibleNotes.length) {
+      return;
+    }
+
     if (index === 0) {
       this.selectedNote = visibleNotes[visibleNotes.length - 1];
-      this.fetchNoteTabContent();
-      this.scrollToNoteElement(this.selectedNote)
-
+    } else if (index <= visibleNotes.length) {
+      this.selectedNote = visibleNotes[index - 1];
     } else {
-      if (index <= visibleNotes.length) {
-        this.selectedNote = visibleNotes[index - 1];
-        this.scrollToNoteElement(this.selectedNote)
-
-        this.fetchNoteTabContent();
-      }
+      return;
     }
 
+    this.scrollToNoteElement(this.selectedNote);
+    this.fetchNoteTabContent();
   }
 
-  fetchNoteTabContent() {
-    //Fetch only if tab created otherwise it has no meaning to hit web server
-    if (this.selectedNote.id && !this.selectedNote.content) {
+  fetchNoteTabContent(): void {
+    if (this.selectedNote?.id && !this.selectedNote.content) {
       this.isFetchingNoteContent = true;
       this.noteService.fetchNoteTab(this.selectedNote.slug, this.selectedNote.id)
-        .subscribe(
-          response => {
-            if (response.code == 1) {
-              let content = response.content.content;
-              if (this._noteDetails.info.type == 'Private') {
-                content = Utils.noteDecrypt(this.selectedNote.slug, content);
-              }
-              this.selectedNote.content = content;
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            if (response.code !== 1) {
+              return;
             }
-          }, error => { }, () => {
+
+            let content = response.content.content;
+            if (this.noteInfo?.type === 'Private') {
+              content = Utils.noteDecrypt(this.selectedNote.slug, content);
+            }
+            this.selectedNote.content = content;
+          },
+          complete: () => {
+            this.isFetchingNoteContent = false;
+          },
+          error: () => {
             this.isFetchingNoteContent = false;
           }
-        );
+        });
     }
-    if (this.noteCollection) {
-      const currentIndex = this.noteCollection.filter(n => n.visibility === 1).indexOf(this.selectedNote);
-      window.location.hash = (currentIndex + 1).toString();
-    }
-  }
 
-  onChangeSelectedNote(note: NoteTabUiModel, scrollToElement: boolean) {
-    if (this.selectedNote != note) {
-      this.selectedNote = note;
-      if (this.selectedNote.id) {
-        this.fetchNoteTabContent();
-      }
-      if (scrollToElement) {
-        this.scrollToNoteElement(note)
-      }
+    const currentIndex = this.getVisibleNotes().indexOf(this.selectedNote);
+    if (currentIndex >= 0) {
+      window.location.hash = String(currentIndex + 1);
     }
   }
 
-  scrollToNoteElement(note: NoteTabUiModel) {
-    //Scroll To Left Position
-    var position = this.noteCollection.indexOf(note)
-    if (this.tabs.length > 0 && this.tabs.toArray()[position]) {
-      var el = this.tabs.toArray()[position].nativeElement as HTMLDivElement
-      var div = this.topScrollbar.nativeElement as HTMLDivElement
-      // div.scrollLeft = el.offsetLeft;
-      div.scrollTo({ left: el.offsetLeft, behavior: 'smooth' })
+  onChangeSelectedNote(note: NoteTabUiModel, scrollToElement: boolean): void {
+    if (this.selectedNote === note) {
+      return;
+    }
+
+    this.selectedNote = note;
+    if (this.selectedNote.id) {
+      this.fetchNoteTabContent();
+    }
+
+    if (scrollToElement) {
+      this.scrollToNoteElement(note);
+    }
+
+    this.syncEditorOptions();
+  }
+
+  scrollToNoteElement(note: NoteTabUiModel): void {
+    const position = this.noteCollection.indexOf(note);
+    const tabElement = this.tabs?.toArray()[position]?.nativeElement;
+    const scrollContainer = this.topScrollbar?.nativeElement;
+
+    if (tabElement && scrollContainer) {
+      scrollContainer.scrollTo({ left: tabElement.offsetLeft, behavior: 'smooth' });
     }
   }
 
-  hasEditPermission() {
-    return !this.isNoteLocked() || (this.isNoteLocked() && this.isNoteAuthorized());
+  hasEditPermission(): boolean {
+    return !this.isNoteLocked() || this.isNoteAuthorized();
   }
 
-  addNewNoteTab() {
+  addNewNoteTab(): void {
     if (this.noteCollection.length > 20) {
       this.toastService.showToast('20 tabs only');
       return;
     }
+
     if (!this.hasEditPermission()) {
       this.toastService.showToast('Unlock note to add tabs');
       return;
@@ -341,318 +332,168 @@ export class NoteCollectionComponent implements OnInit {
     tab.slug = this.slug;
     tab.visibility = 1;
     tab.isTitleEnabled = true;
-    let dummy = new NoteTabUiModel();
-    dummy.order_index = 0;
-    tab.order_index = this.noteCollection.reduce((oldVal: NoteTabUiModel, newVal: NoteTabUiModel) => oldVal.order_index > newVal.order_index ? oldVal : newVal, dummy).order_index + 1;
+    tab.order_index = this.getNextOrderIndex();
 
     this.noteCollection.push(tab);
     this.onChangeSelectedNote(tab, true);
 
     setTimeout(() => {
-      const element = this.itemTitleInputCollection.last.nativeElement as HTMLInputElement;
-      element.focus();
-      if (element.nodeName.toUpperCase() == 'INPUT') {
-        setTimeout(() => {
-          element.select();
-        }, 0);
-      } else {
-        setTimeout(() => {
-          (element.querySelector('.tab-title') as HTMLInputElement).select();
-        }, 0);
-      }
+      this.focusLastTitleInput();
     }, 10);
   }
-  hideNoteTab(note: NoteTabUiModel) {
+
+  hideNoteTab(note: NoteTabUiModel): void {
     if (!this.hasEditPermission()) {
       this.toastService.showToast('Unlock note to delete tabs');
       return;
     }
-    note.visibility = 0;
+
     const isCurrentNote = note === this.selectedNote;
+    note.visibility = 0;
+
     if (!note.id) {
       const indexOf = this.noteCollection.indexOf(note);
       this.noteCollection.splice(indexOf, 1);
       this.handleEmptyCollection();
       this.modifiedTab('visibility', note);
       return;
-
     }
 
     this.handleEmptyCollection();
     this.modifiedTab('visibility', note);
 
     if (isCurrentNote) {
-      this.selectedNote = null;
-      let nextTab = this.noteCollection.filter((item: NoteTabUiModel) => {
-        return item.order_index > note.order_index && item.visibility == 1;
-      }).shift();
-      if (nextTab) {
-        this.onChangeSelectedNote(nextTab, false);
-      } else {
-        let previousTab = this.noteCollection.filter((item: NoteTabUiModel) => {
-          return item.order_index < note.order_index && item.visibility == 1;
-        }).pop();
-        if (previousTab) {
-          this.onChangeSelectedNote(previousTab, false);
-        }
-      }
+      this.selectedNote = this.findAdjacentVisibleTab(note) ?? new NoteTabUiModel();
     }
   }
-  onDoubleClickTab(tab: NoteTabUiModel, $event: MouseEvent) {
+
+  onDoubleClickTab(tab: NoteTabUiModel, event: MouseEvent): void {
     if (!this.hasEditPermission()) {
       this.toastService.showToast('Unlock note to edit title');
       return;
     }
-    tab.isTitleEnabled = true;
-    const element = $event.srcElement as HTMLInputElement;
 
-    if (element.nodeName.toUpperCase() == 'INPUT') {
-      setTimeout(() => {
-        element.select();
-      }, 0);
-    } else {
-      setTimeout(() => {
-        (element.querySelector('.tab-title') as HTMLInputElement).select();
-      }, 0);
-    }
-
+    this.enableTitleEditing(tab, event.target as HTMLElement);
   }
-  onTitleBlur(note: NoteTabUiModel) {
+
+  onTitleBlur(note: NoteTabUiModel): void {
     note.isTitleEnabled = false;
   }
 
-  handleEmptyCollection() {
-    if (this.noteCollection.filter(note => note.visibility == 1).length == 0) {
-      this.addNewNoteTab();
+  modifiedTab(action: TabChangeType, tab: NoteTabUiModel): void {
+    switch (action) {
+      case 'content':
+        tab.modifiedContent = true;
+        break;
+      case 'title':
+        tab.modifiedTitle = true;
+        this.syncEditorOptions();
+        break;
+      case 'visibility':
+        tab.modifiedVisibility = true;
+        break;
+      case 'order':
+        tab.modifiedOrder = true;
+        break;
     }
-  }
-  modifiedTab(action: string, tab: NoteTabUiModel) {
-    if (action == 'content') {
-      tab.modifiedContent = true;
-    } else if (action == 'title') {
-      tab.modifiedTitle = true;
-    } else if (action == 'visibility') {
-      tab.modifiedVisibility = true;
-    } else if (action == 'order') {
-      tab.modifiedOrder = true;
-    }
+
     this.autoSave.next(true);
   }
-  hasUnsavedNotes() {
 
-    const modifiedTab: NoteTabUiModel[] = [];
-    const newTabs: NoteTabUiModel[] = [];
-    if (this.noteCollection == null) {
+  hasUnsavedNotes(): boolean {
+    const pendingChanges = this.getPendingSaveState();
+    return pendingChanges.modifiedTabs.length > 0 || pendingChanges.newTabs.length > 0;
+  }
+
+  saveNotes(): void {
+    const request = this.saveNotesRequest();
+    if (!request) {
       return;
     }
-    for (let i = 0; i < this.noteCollection.length; i++) {
-      const note = this.noteCollection[i];
-      if (this.slug != note.slug) {
-        return;
-      }
 
-      if (!note.id) {
-        newTabs.push(note);
-      } else {
-        let updatedNote = new NoteTabUiModel();
-        updatedNote = Object.assign({}, note);
-        if (!updatedNote.modifiedTitle) {
-          updatedNote.title = null;
-        }
-        if (!updatedNote.modifiedContent) {
-          updatedNote.content = null;
-        }
-        if (!updatedNote.modifiedVisibility) {
-          updatedNote.visibility = null;
-        }
-        if (updatedNote.modifiedContent || updatedNote.modifiedTitle || updatedNote.modifiedOrder || updatedNote.modifiedVisibility) {
-          modifiedTab.push(updatedNote);
-        }
-      }
-    }
-    let unchangedNewTabs = newTabs.filter((item) => {
-      return item.title == "Untitled Document" && item.content.length == 0
-    });
-    if (modifiedTab.length == 0 && (newTabs.length - unchangedNewTabs.length) === 0) {
-      return false;
-    }
-    return true;
+    request
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.toastService.showToast('Saved');
+      });
   }
 
-  saveNotes() {
-    let allObservable = this.saveNotesReuqest();
-    if (allObservable != null) {
-      allObservable.subscribe(results => {
-        //TODO:: Check if code==1
-        this.toastService.showToast("Saved");
-        console.log(results);
-      })
-    }
-  }
-
-  saveNotesReuqest(): Observable<any> | null {
-
-    // show password dialog only when note is locked & not yet authorized
-    // do not show dialog when its created newly or Public
-    if (this.isNoteLocked()) {
-      if (!this.isNoteAuthorized()) {
-        this.unlockCurrentNote();
-        return null;
-      }
+  saveNotesRequest(): Observable<unknown> | null {
+    if (this.isNoteLocked() && !this.isNoteAuthorized()) {
+      this.unlockCurrentNote();
+      return null;
     }
 
-
-    const modifiedTab: NoteTabUiModel[] = [];
-    const newTabs: NoteTabUiModel[] = [];
-
-    for (let i = 0; i < this.noteCollection.length; i++) {
-      const note = this.noteCollection[i];
-      if (this.slug != note.slug) {
-        return null;
-      }
-
-      if (!note.id) {
-        newTabs.push(note);
-      } else {
-        let updatedNote = new NoteTabUiModel();
-        updatedNote = Object.assign({}, note);
-        if (!updatedNote.modifiedTitle) {
-          updatedNote.title = null;
-        }
-        if (!updatedNote.modifiedContent) {
-          updatedNote.content = null;
-        }
-        if (!updatedNote.modifiedVisibility) {
-          updatedNote.visibility = null;
-        }
-        if (updatedNote.modifiedContent || updatedNote.modifiedTitle || updatedNote.modifiedOrder || updatedNote.modifiedVisibility) {
-          modifiedTab.push(updatedNote);
-        }
-      }
-    }
-
-    if (modifiedTab.length + newTabs.length === 0) {
+    const pendingChanges = this.getPendingSaveState();
+    if (pendingChanges.modifiedTabs.length + pendingChanges.newTabs.length === 0) {
       this.toastService.showToast('Nothing to save.');
       return null;
     }
-    let allObservable: Observable<any>
-    let obsArray: Observable<any>[] = [];
-    if (modifiedTab.length > 0) {
 
-      // create new element so that if note is private
-      // then it will impact UI if content encrypted
-      const tabs = new Array<NoteTabUiModel>();
-      modifiedTab.forEach((mItem: NoteTabUiModel, index: number) => {
-        const mTab = new NoteTabUiModel();
-        mTab.id = mItem.id;
-        mTab.order_index = mItem.order_index;
-        mTab.title = mItem.title;
-        mTab.content = mItem.content;
-        mTab.slug = mItem.slug;
-        mTab.status = mItem.status;
-        mTab.visibility = mItem.visibility;
-        if (this._noteDetails.info.type === 'Private') {
-          if (mTab.content) {
-            mTab.content = Utils.noteEncrypt(mTab.slug, mTab.content);
-          }
-          if (mTab.title) {
-            mTab.title = Utils.noteEncrypt(mTab.slug, mTab.title);
-          }
-        }
-        tabs.push(mTab);
-      });
-      obsArray.push(this.noteService.updateNoteTabs(this.slug, { items: tabs }))
+    const requests: Observable<unknown>[] = [];
+    if (pendingChanges.modifiedTabs.length) {
+      const tabs = this.buildPersistableTabs(pendingChanges.modifiedTabs);
+      requests.push(this.noteService.updateNoteTabs(this.slug, { items: tabs }));
     }
-    if (newTabs.length > 0) {
 
-      // create new element so that if note is private
-      // then it will impact UI if content encrypted
-      const tabs = new Array<NoteTabUiModel>();
-      newTabs.forEach((mItem: NoteTabUiModel, index: number) => {
-        const mTab = new NoteTabUiModel();
-        mTab.id = mItem.id;
-        mTab.order_index = mItem.order_index;
-        mTab.title = mItem.title;
-        mTab.content = mItem.content;
-        mTab.slug = mItem.slug;
-        mTab.status = mItem.status;
-        mTab.visibility = mItem.visibility;
-        if (this._noteDetails.info.type == 'Private') {
-          if (mTab.content) {
-            mTab.content = Utils.noteEncrypt(mTab.slug, mTab.content);
-          }
-          if (mTab.title) {
-            mTab.title = Utils.noteEncrypt(mTab.slug, mTab.title);
-          }
-        }
-        tabs.push(mTab);
-      });
-
-      obsArray.push(this.noteService.createNewNoteTabs(this.slug, { items: tabs }).pipe(
-        tap((response: any) => {
-          if (response.code == 1) {
-            for (let i = 0; i < newTabs.length; i++) {
-              const _note = newTabs[i];
-              _note.id = response.tabs[i].id;
+    if (pendingChanges.newTabs.length) {
+      const tabs = this.buildPersistableTabs(pendingChanges.newTabs);
+      requests.push(
+        this.noteService.createNewNoteTabs(this.slug, { items: tabs }).pipe(
+          tap((response: { code: number; tabs: Array<{ id: string }> }) => {
+            if (response.code === 1) {
+              pendingChanges.newTabs.forEach((note, index) => {
+                note.id = response.tabs[index].id;
+              });
             }
-          }
-        })
-      ))
+          })
+        )
+      );
     }
 
-    allObservable = forkJoin(obsArray).pipe(map(results => {
-      let response: any = {}
-      if (modifiedTab.length > 0) {
-        response.updated = results[0];
-      }
-      if (newTabs.length > 0) {
-        response.new = results[modifiedTab.length == 0 ? 0 : 1];
-      }
-      return response
-    }));
+    this.resetModifiedFlags();
 
-    this.noteCollection.forEach(item => {
-      item.modifiedContent = false;
-      item.modifiedOrder = false;
-      item.modifiedTitle = false;
-      item.modifiedVisibility = false;
-    });
-    return allObservable;
+    return forkJoin(requests).pipe(
+      map((results) => {
+        if (results.length === 1) {
+          return results[0];
+        }
+
+        return {
+          updated: results[0],
+          created: results[1]
+        };
+      })
+    );
   }
-  lockCurrentNote() {
+
+  lockCurrentNote(): void {
     this.toParrent.emit('SET_PASSWORD');
   }
-  unlockCurrentNote() {
+
+  unlockCurrentNote(): void {
     this.toParrent.emit('UNLOCK');
   }
-  removePassword() {
+
+  removePassword(): void {
     this.toParrent.emit('LOGOUT');
   }
-  /**
-   *checks if use has permission to perform edit/delete operation(If password has been set)
-   */
-  isNoteAuthorized() {
-    return (this.noteService.getPassword(this.slug) ? true : false);
+
+  isNoteAuthorized(): boolean {
+    return !!this.noteService.getPassword(this.slug);
   }
 
-  /**
-   * Checks if note is locked or note
-   */
-  isNoteLocked() {
-    if (this.noteInfo) {
-      return this.noteInfo.type === 'Public' ? false : true;
-    }
-    return false;
+  isNoteLocked(): boolean {
+    return this.noteInfo ? this.noteInfo.type !== 'Public' : false;
   }
-  /* To copy Text from Textbox */
-  copyInputMessage(inputElement: HTMLInputElement) {
+
+  copyInputMessage(inputElement: HTMLInputElement): void {
     inputElement.select();
     document.execCommand('copy');
     inputElement.setSelectionRange(0, 0);
   }
 
-  /* To copy any Text */
-  copyText(val: string) {
+  copyText(val: string): void {
     const selBox = document.createElement('textarea');
     selBox.style.position = 'fixed';
     selBox.style.left = '0';
@@ -665,58 +506,222 @@ export class NoteCollectionComponent implements OnInit {
     document.execCommand('copy');
     document.body.removeChild(selBox);
   }
-  copyCurrentNoteText() {
-    this.copyText(this.selectedNote.content);
+
+  copyCurrentNoteText(): void {
+    this.copyText(this.selectedNote?.content ?? '');
     this.toastService.showToast('Copied');
   }
-  copyCurrentNoteLink() {
+
+  copyCurrentNoteLink(): void {
     this.copyText(this.document.location.href);
     this.toastService.showToast('Copied link');
   }
-  download() {
+
+  download(): void {
     this.toParrent.emit('DOWNLOAD_CURRENT_TAB');
   }
 
-  onTabMouseWheel(event: WheelEvent) {
-    event.stopPropagation()
-    var div = this.topScrollbar.nativeElement as HTMLDivElement
-    var delta = event.deltaY;
-
-    if (delta == undefined) {
-      var detail = event.detail == 0 ? (event as any).wheelDelta : event.detail
-      if (detail > 0) {
-        delta = 30;
-      } else {
-        delta = -30;
-      }
+  onTabMouseWheel(event: WheelEvent & { detail?: number; wheelDelta?: number }): void {
+    event.stopPropagation();
+    const scrollContainer = this.topScrollbar?.nativeElement;
+    if (!scrollContainer) {
+      return;
     }
 
-    div.scrollLeft -= delta * 3;
+    let delta = event.deltaY;
+    if (delta === undefined) {
+      const detail = event.detail === 0 ? event.wheelDelta : event.detail;
+      delta = detail && detail > 0 ? 30 : -30;
+    }
+
+    scrollContainer.scrollLeft -= delta * 3;
   }
 
-  showConfirmDeleteBox() {
-
-    if (this.isNoteLocked() && this.isNoteAuthorized() == false) {
+  showConfirmDeleteBox(): void {
+    if (this.isNoteLocked() && !this.isNoteAuthorized()) {
       this.toastService.showToast('Unlock note and try again.');
       return;
     }
 
     const dialogRef = this.dialog.open(ConfirmDialogComponentComponent, {
       data: {
-        Title: "Delete?",
-        Message: "Are you sure you want to delete all notes?"
+        Title: 'Delete?',
+        Message: 'Are you sure you want to delete all notes?'
       }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.deleteNote()
-      }
+    dialogRef.afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((result) => {
+        if (result) {
+          this.deleteNote();
+        }
+      });
+  }
+
+  deleteNote(): void {
+    this.toParrent.emit('DELETE_NOTE');
+  }
+
+  private applyGeneralSettings(form: NoteGeneralSetting): void {
+    this.enableSpellCheck = form.enableSpellCheck;
+    this.editorEnableLineNumber = form.editorEnableLineNumber;
+    this.editorTheme = form.editorTheme;
+    this.autoSaveEnabled = form.autoSave;
+    this.syncEditorOptions();
+  }
+
+  private decryptPrivateTitles(): void {
+    if (this.noteInfo?.type !== 'Private') {
+      return;
+    }
+
+    this.noteCollection.forEach((tab) => {
+      tab.title = Utils.noteDecrypt(tab.slug, tab.title);
     });
   }
 
-  deleteNote() {
-    this.toParrent.emit("DELETE_NOTE")
+  private getVisibleNotes(): NoteTabUiModel[] {
+    return this.noteCollection.filter((tab) => tab.visibility === 1);
   }
 
+  private getNextOrderIndex(): number {
+    const highestOrderIndex = this.noteCollection.reduce((max, tab) => Math.max(max, tab.order_index ?? 0), 0);
+    return highestOrderIndex + 1;
+  }
+
+  private focusLastTitleInput(): void {
+    const element = this.itemTitleInputCollection?.last?.nativeElement;
+    if (!element) {
+      return;
+    }
+
+    element.focus();
+    setTimeout(() => element.select(), 0);
+  }
+
+  private handleEmptyCollection(): void {
+    if (!this.getVisibleNotes().length) {
+      this.addNewNoteTab();
+    }
+  }
+
+  private getPendingSaveState(): { modifiedTabs: NoteTabUiModel[]; newTabs: NoteTabUiModel[] } {
+    const modifiedTabs: NoteTabUiModel[] = [];
+    const newTabs: NoteTabUiModel[] = [];
+
+    for (const note of this.noteCollection) {
+      if (this.slug !== note.slug) {
+        return { modifiedTabs: [], newTabs: [] };
+      }
+
+      if (!note.id) {
+        if (!this.isDefaultUnsavedTab(note)) {
+          newTabs.push(note);
+        }
+        continue;
+      }
+
+      const updatedNote = this.toChangedTab(note);
+      if (updatedNote) {
+        modifiedTabs.push(updatedNote);
+      }
+    }
+
+    return { modifiedTabs, newTabs };
+  }
+
+  private toChangedTab(note: NoteTabUiModel): NoteTabUiModel | null {
+    const updatedNote = Object.assign(new NoteTabUiModel(), note);
+    if (!updatedNote.modifiedTitle) {
+      updatedNote.title = null;
+    }
+    if (!updatedNote.modifiedContent) {
+      updatedNote.content = null;
+    }
+    if (!updatedNote.modifiedVisibility) {
+      updatedNote.visibility = null;
+    }
+
+    if (!updatedNote.modifiedContent && !updatedNote.modifiedTitle && !updatedNote.modifiedOrder && !updatedNote.modifiedVisibility) {
+      return null;
+    }
+
+    return updatedNote;
+  }
+
+  private isDefaultUnsavedTab(note: NoteTabUiModel): boolean {
+    return note.title === 'Untitled Document' && note.content.length === 0;
+  }
+
+  private buildPersistableTabs(tabs: NoteTabUiModel[]): NoteTabUiModel[] {
+    return tabs.map((item) => {
+      const tab = Object.assign(new NoteTabUiModel(), item);
+      if (this.noteInfo?.type === 'Private') {
+        if (tab.content) {
+          tab.content = Utils.noteEncrypt(tab.slug, tab.content);
+        }
+        if (tab.title) {
+          tab.title = Utils.noteEncrypt(tab.slug, tab.title);
+        }
+      }
+      return tab;
+    });
+  }
+
+  private resetModifiedFlags(): void {
+    this.noteCollection.forEach((item) => {
+      item.modifiedContent = false;
+      item.modifiedOrder = false;
+      item.modifiedTitle = false;
+      item.modifiedVisibility = false;
+    });
+  }
+
+  private findAdjacentVisibleTab(note: NoteTabUiModel): NoteTabUiModel | undefined {
+    return this.noteCollection.find((item) => item.order_index > note.order_index && item.visibility === 1)
+      ?? [...this.noteCollection].reverse().find((item) => item.order_index < note.order_index && item.visibility === 1);
+  }
+
+  private enableTitleEditing(tab: NoteTabUiModel, target?: HTMLElement): void {
+    tab.isTitleEnabled = true;
+    const element = target ?? this.el.nativeElement.querySelector('.tab.active .tab-title');
+    if (!element) {
+      return;
+    }
+
+    setTimeout(() => {
+      if (element instanceof HTMLInputElement) {
+        element.focus();
+        element.select();
+        return;
+      }
+
+      const input = element.querySelector('.tab-title') as HTMLInputElement | null;
+      input?.select();
+    }, 0);
+  }
+
+  private syncEditorOptions(): void {
+    const editor = this.codeMirror;
+    if (!editor) {
+      return;
+    }
+
+    const useCodeMode = this.shouldUseCodeEditorEnhancements();
+    editor.setOptionIfChanged('theme', useCodeMode ? this.editorTheme : 'null');
+    editor.setOptionIfChanged('lineNumbers', useCodeMode && this.editorEnableLineNumber);
+  }
+
+  private shouldUseCodeEditorEnhancements(): boolean {
+    if (!this.selectedNote?.title || this.editorTheme === 'null') {
+      return false;
+    }
+
+    const extension = this.selectedNote.title.toLowerCase().split('.').pop();
+    return !!extension && [
+      'js', 'ts', 'json', 'yaml', 'yml', 'php', 'py', 'c', 'cpp', 'go',
+      'sh', 'bash', 'zsh', 'md', 'xml', 'html', 'css', 'docker', 'htaccess', 'conf'
+    ].includes(extension);
+  }
 }

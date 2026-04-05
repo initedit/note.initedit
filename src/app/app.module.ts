@@ -8,7 +8,7 @@ import { HomeComponent } from './home/home.component';
 import { NoteComponent } from './note/note.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 import { RouterModule, Routes } from '@angular/router';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { HeaderNavComponent } from './header-nav/header-nav.component';
 import { NoteCollectionComponent } from './note-collection/note-collection.component';
 import { ClickStopPropagationDirective } from './click-stop-propagation.directive';
@@ -29,35 +29,27 @@ const routes: Routes = [
   { path: '**', component: NoteComponent },
 ];
 
-
-
-@NgModule({
-  declarations: [
-    AppComponent,
-    HomeComponent,
-    NoteComponent,
-    PageNotFoundComponent,
-    HeaderNavComponent,
-    NoteCollectionComponent,
-    ClickStopPropagationDirective,
-    ToastComponent,
-    DateAgoPipe,
-    SettingComponent
-  ],
-  imports: [
-    BrowserModule,
-    FormsModule,
-    ReactiveFormsModule,
-    SharedModule,
-    RouterModule.forRoot(routes),
-    HttpClientModule,
-    BrowserAnimationsModule,
-    MaterialModule,
-    DragDropModule,
-    CodemirrorModule,
-  ],
-  providers: [
-  ],
-  bootstrap: [AppComponent]
-})
+@NgModule({ declarations: [
+        AppComponent,
+        HomeComponent,
+        NoteComponent,
+        PageNotFoundComponent,
+        HeaderNavComponent,
+        NoteCollectionComponent,
+        ClickStopPropagationDirective,
+        ToastComponent,
+        DateAgoPipe,
+        SettingComponent
+    ],
+    bootstrap: [AppComponent], imports: [BrowserModule,
+        FormsModule,
+        ReactiveFormsModule,
+        SharedModule,
+        RouterModule.forRoot(routes),
+        BrowserAnimationsModule,
+        MaterialModule,
+        DragDropModule,
+        CodemirrorModule], providers: [
+        provideHttpClient(withInterceptorsFromDi())
+    ] })
 export class AppModule { }

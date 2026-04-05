@@ -28,6 +28,11 @@
               "node_modules/font-awesome/css/font-awesome.css"
             ],
             "scripts": [],
+            "allowedCommonJsDependencies": [
+              "codemirror",
+              "codemirror/mode/javascript/javascript",
+              "codemirror/mode/markdown/markdown"
+            ],
             "aot": false,
             "vendorChunk": true,
             "extractLicenses": false,
@@ -59,18 +64,21 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "NoteUI:build"
+            "buildTarget": "NoteUI:build",
+            "host": "0.0.0.0",
+            "port": 4200,
+            "disableHostCheck": true
           },
           "configurations": {
             "production": {
-              "browserTarget": "NoteUI:build:production"
+              "buildTarget": "NoteUI:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "NoteUI:build"
+            "buildTarget": "NoteUI:build"
           }
         },
         "test": {
@@ -110,5 +118,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }
